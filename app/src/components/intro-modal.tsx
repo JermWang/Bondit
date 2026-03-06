@@ -11,6 +11,12 @@ const SLIDES = [
     body: "pump.fun deploys your token and disappears. BondIt deploys and then actively stewards: managing LP on Meteora, compounding 99% of fees back into the pool, and releasing the treasury at a fixed daily rate. No dev dumps. No rug pulls. Deterministic from genesis.",
   },
   {
+    id: "ai",
+    subtitle: "Intelligence built-in",
+    title: "OpenClaw AI Integration",
+    body: "Every BondIt launch gets its own dedicated AI agent. Connect your community chat directly to our OpenClaw AI to answer questions about token economics, charter parameters, and live distribution progress in real-time.",
+  },
+  {
     id: "charter",
     subtitle: "Every token. Every time.",
     title: "Immutable On-Chain Charter",
@@ -90,7 +96,7 @@ function VsSVG() {
         {text:"abandoned",y:202},
       ].map(({text,y},i)=>(
         <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.5+i*0.15}s both`}}>
-          <text x="12" y={y} fontSize="7.5" fill="#FF3B5C" fontFamily="monospace" opacity="0.55">✕ {text}</text>
+          <text x="12" y={y} fontSize="9" fill="#FF3B5C" fontFamily="monospace" opacity="0.55">✕ {text}</text>
         </g>
       ))}
 
@@ -157,7 +163,7 @@ function VsSVG() {
         {text:"fee compounding",y:202},
       ].map(({text,y},i)=>(
         <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.8+i*0.15}s both`}}>
-          <text x="178" y={y} fontSize="7.5" fill="#A9FF00" fontFamily="monospace" opacity="0.6">✓ {text}</text>
+          <text x="178" y={y} fontSize="9" fill="#A9FF00" fontFamily="monospace" opacity="0.6">✓ {text}</text>
         </g>
       ))}
 
@@ -175,6 +181,72 @@ function VsSVG() {
   );
 }
 
+function AiSVG() {
+  return (
+    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <pattern id="agrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(139,92,246,0.07)" strokeWidth="0.5"/>
+        </pattern>
+        <linearGradient id="aiGlow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#A78BFA" stopOpacity="0.2"/>
+          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect width="320" height="240" fill="url(#agrid)"/>
+
+      {/* Central AI Node */}
+      <g style={{animation:"floatNode 3s ease-in-out infinite"}}>
+        <circle cx="160" cy="110" r="30" fill="url(#aiGlow)" stroke="#8B5CF6" strokeWidth="2"/>
+        <circle cx="160" cy="110" r="22" fill="none" stroke="#A78BFA" strokeWidth="1" strokeDasharray="4 4" style={{animation:"spinSlow 10s linear infinite"}}/>
+        {/* Abstract face/claw symbol */}
+        <path d="M152 105 L168 105 M160 112 L160 120" stroke="#F1F1F4" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="152" cy="105" r="1.5" fill="#F1F1F4"/>
+        <circle cx="168" cy="105" r="1.5" fill="#F1F1F4"/>
+      </g>
+      
+      {/* Label */}
+      <text x="160" y="155" textAnchor="middle" fontSize="10" fill="#A78BFA" fontFamily="monospace" fontWeight="bold">OPENCLAW AI</text>
+
+      {/* Data streams (animated lines) */}
+      <g stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 6" opacity="0.6">
+        <path d="M80 60 Q120 60 140 90" style={{animation:"streamFlow 2s linear infinite"}}/>
+        <path d="M240 60 Q200 60 180 90" style={{animation:"streamFlow 2s linear infinite reverse"}}/>
+        <path d="M100 170 Q130 170 145 135" style={{animation:"streamFlow 1.5s linear infinite"}}/>
+        <path d="M220 170 Q190 170 175 135" style={{animation:"streamFlow 1.5s linear infinite reverse"}}/>
+      </g>
+
+      {/* Peripheral nodes */}
+      {[
+        {cx:75, cy:55, label:"Telegram"},
+        {cx:245, cy:55, label:"Discord"},
+        {cx:95, cy:175, label:"Charter Data"},
+        {cx:225, cy:175, label:"Live Dist"},
+      ].map(({cx,cy,label}, i) => (
+        <g key={label} style={{animation:`fadeIn 0.5s ease-out ${i*0.2}s both`}}>
+          <circle cx={cx} cy={cy} r="18" fill="rgba(139,92,246,0.1)" stroke="#8B5CF6" strokeWidth="1.5"/>
+          <text x={cx} y={cy+3} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{label}</text>
+          <circle cx={cx} cy={cy-18} r="3" fill="#A78BFA">
+            <animate attributeName="opacity" values="0.2;1;0.2" dur={`${1.5+i*0.5}s`} repeatCount="indefinite"/>
+          </circle>
+        </g>
+      ))}
+
+      {/* Pulse rings from center */}
+      <circle cx="160" cy="110" r="30" fill="none" stroke="#A78BFA" strokeWidth="1">
+        <animate attributeName="r" values="30; 80" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.5; 0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <style>{`
+        @keyframes floatNode{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes spinSlow{from{transform:rotate(0deg);transform-origin:160px 110px}to{transform:rotate(360deg);transform-origin:160px 110px}}
+        @keyframes streamFlow{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
+        @keyframes fadeIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+      `}</style>
+    </svg>
+  );
+}
 function CharterSVG() {
   return (
     <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -199,14 +271,14 @@ function CharterSVG() {
         <g key={l} style={{animation:`rowIn 0.4s ease-out ${0.2+i*0.14}s both`}}>
           <text x="98" y={y} fontSize="10.5" fill="rgba(255,255,255,0.45)" fontFamily="monospace">{l}</text>
           <text x="220" y={y} textAnchor="end" fontSize="10.5" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">{v}</text>
-          <circle cx="228" cy={y-3.5} r="6.5" fill="rgba(0,255,178,0.12)" stroke="#00FFB2" strokeWidth="1"
+          <circle cx="228" cy={y-3.5} r="5" fill="rgba(0,255,178,0.12)" stroke="#00FFB2" strokeWidth="1"
             style={{animation:`popIn 0.3s ease-out ${0.35+i*0.14}s both`}}/>
-          <path d={`M224.5 ${y-3.5} L226.5 ${y-1} L231.5 ${y-7}`} stroke="#00FFB2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          <path d={`M225 ${y-3.5} L227 ${y-1} L231 ${y-7}`} stroke="#00FFB2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"
             style={{animation:`popIn 0.3s ease-out ${0.35+i*0.14}s both`}}/>
         </g>
       ))}
       {/* Padlock */}
-      <g style={{animation:"floatLock 2s ease-in-out infinite"}}>
+      <g style={{animation:"floatLock 2s ease-in-out infinite", transformOrigin: "160px 215px", transform: "scale(0.85)"}}>
         <rect x="140" y="206" width="40" height="26" rx="5" fill="rgba(169,255,0,0.15)" stroke="#A9FF00" strokeWidth="1.5"/>
         <path d="M148 206 L148 200 Q160 190 172 200 L172 206" stroke="#A9FF00" strokeWidth="1.5" fill="none"/>
         <circle cx="160" cy="219" r="4.5" fill="#A9FF00"/>
@@ -431,6 +503,7 @@ function TransparencySVG() {
 
 function SlideSVG({ id }: { id: string }) {
   if (id === "vs") return <VsSVG />;
+  if (id === "ai") return <AiSVG />;
   if (id === "charter") return <CharterSVG />;
   if (id === "distribution") return <DistributionSVG />;
   if (id === "flight") return <FlightSVG />;
