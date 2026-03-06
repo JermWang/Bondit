@@ -20,7 +20,7 @@ const SLIDES = [
     id: "charter",
     subtitle: "Every token. Every time.",
     title: "Immutable On-Chain Charter",
-    body: "At genesis, a charter is written on-chain and locked forever: 80% bonding curve, 15% treasury, 5% LP reserve, 99/1 LP-to-house fee split, and a 1% protocol fee. No admin keys. No parameter changes after mint. Verifiable by anyone.",
+    body: "At genesis, a charter is written on-chain and locked forever: 80% bonding curve, 15% treasury, 5% LP reserve, 99% of fees redistributed into LP, and a 1% protocol fee. No admin keys. No parameter changes after mint. Verifiable by anyone.",
   },
   {
     id: "distribution",
@@ -264,7 +264,7 @@ function CharterSVG() {
         {l:"Curve Supply",v:"80%",y:80},
         {l:"Treasury",v:"15%",y:101},
         {l:"LP Reserve",v:"5%",y:122},
-        {l:"Fee Split",v:"99 / 1",y:143},
+        {l:"Fee Redistribution",v:"99% to LP",y:143},
         {l:"Protocol Fee",v:"1%",y:164},
         {l:"Max Duration",v:"180 days",y:185},
       ].map(({l,v,y},i)=>(
