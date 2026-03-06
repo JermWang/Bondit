@@ -543,13 +543,13 @@ export function IntroModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
       style={{ background: "rgba(20,24,40,0.55)", backdropFilter: "blur(10px)" }}
     >
-      <div className="relative w-full max-w-[460px] glass !rounded-2xl overflow-hidden animate-fade-in shadow-[0_32px_80px_rgba(0,0,0,0.3)]">
+      <div className="relative w-full max-w-[460px] glass !rounded-2xl overflow-hidden animate-fade-in shadow-[0_32px_80px_rgba(0,0,0,0.3)] flex flex-col max-h-[90vh]">
 
         {/* Top lime accent line */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#A9FF00] to-transparent" style={{animation:"glowLine 3s ease-in-out infinite"}}/>
+        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#A9FF00] to-transparent flex-shrink-0" style={{animation:"glowLine 3s ease-in-out infinite"}}/>
 
         {/* Close button */}
         <button
@@ -563,18 +563,18 @@ export function IntroModal() {
         </button>
 
         {/* SVG illustration */}
-        <div className="h-[240px] relative overflow-hidden" style={{background:"linear-gradient(to bottom, rgba(191,198,216,0.4), rgba(202,208,224,0.15))"}}>
+        <div className="h-[200px] sm:h-[240px] relative overflow-hidden flex-shrink-0" style={{background:"linear-gradient(to bottom, rgba(191,198,216,0.4), rgba(202,208,224,0.15))"}}>
           <SlideSVG id={current.id} />
         </div>
 
         {/* Text content */}
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6 overflow-y-auto">
           <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-[#56566A] mb-1.5">{current.subtitle}</div>
-          <h2 className="font-display text-[21px] font-bold text-[#F1F1F4] mb-3 leading-tight">{current.title}</h2>
-          <p className="text-[13px] text-[#8B8FA3] leading-[1.6]">{current.body}</p>
+          <h2 className="font-display text-[18px] sm:text-[21px] font-bold text-[#F1F1F4] mb-2 sm:mb-3 leading-tight">{current.title}</h2>
+          <p className="text-[12px] sm:text-[13px] text-[#8B8FA3] leading-[1.6]">{current.body}</p>
 
           {/* Nav row */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-5 sm:mt-6 pt-2">
             {/* Dot indicators */}
             <div className="flex gap-1.5">
               {SLIDES.map((_, i) => (
