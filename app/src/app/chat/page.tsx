@@ -245,7 +245,7 @@ export default function ChatPage() {
                 Charter
               </div>
               <DetailRow label="Daily Release" value="0.20%" />
-              <DetailRow label="Fee Split" value="99/1 LP/House" />
+              <DetailRow label="Fee Split" value="99% LP / 1% House" />
               <DetailRow label="Max Duration" value="180 days" />
               <DetailRow label="Protocol Fee" value="100 bps" />
               <DetailRow label="Curve Supply" value="80%" />
