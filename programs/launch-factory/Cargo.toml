@@ -1,0 +1,23 @@
+[package]
+name = "launch-factory"
+version = "0.1.0"
+description = "BondIt.lol Launch Factory - Token creation + Agency registration"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "launch_factory"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+bonding-curve = { path = "../bonding-curve", features = ["cpi"] }
+agency-vaults = { path = "../agency-vaults", features = ["cpi"] }
+policy-engine = { path = "../policy-engine", features = ["cpi"] }

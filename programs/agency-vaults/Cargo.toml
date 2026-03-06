@@ -1,0 +1,20 @@
+[package]
+name = "agency-vaults"
+version = "0.1.0"
+description = "BondIt.lol Agency Vaults - Treasury, LP Reserve, Fee Accumulator, House"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "agency_vaults"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }

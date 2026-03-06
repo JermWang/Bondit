@@ -1,0 +1,27 @@
+{
+  "name": "@bondit/workspace",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "workspaces": [
+    "sdk",
+    "app",
+    "cli",
+    "services/*",
+    "tests"
+  ],
+  "scripts": {
+    "build:programs": "anchor build",
+    "test:programs": "anchor test",
+    "build:sdk": "npm run build --workspace @bondit/sdk",
+    "dev:app": "npm run dev --workspace @bondit/app",
+    "dev:indexer": "npm run dev --workspace @bondit/indexer",
+    "dev:keeper": "npm run dev --workspace @bondit/keeper",
+    "dev:ai": "npm run dev --workspace @bondit/ai"
+  },
+  "devDependencies": {
+    "@next/swc-win32-x64-msvc": "^14.1.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  }
+}

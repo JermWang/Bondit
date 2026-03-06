@@ -1,0 +1,20 @@
+[package]
+name = "bonding-curve"
+version = "0.1.0"
+description = "BondIt.lol Bonding Curve - Pump-like trading pre-graduation"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "bonding_curve"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }

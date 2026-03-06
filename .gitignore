@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.yarn/
+
+# Build outputs
+dist/
+target/
+.next/
+out/
+
+# Anchor
+.anchor/
+programs/*/target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keypairs (NEVER commit)
+*-keypair.json
+*.keypair
+
+# Logs
+*.log
+logs/
+
+# Test
+coverage/
+.nyc_output/
