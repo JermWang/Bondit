@@ -37,6 +37,28 @@ bondit-lol/
 | Flight Mode Top10 | ≤18% |
 | Max Stewardship | 180 days |
 
+## AI Integration (OpenClaw)
+
+BondIt provides an advisory AI engine (`services/openclaw-ai`) that answers community questions using real-time on-chain data. It is designed to be used as a **Custom Provider** behind [OpenClaw](https://openclaw.ai), which handles the Telegram/Discord social integrations.
+
+### Setup Instructions for Token Launchers
+
+1. Install OpenClaw on your local machine or server:
+   ```bash
+   npm install -g openclaw@latest
+   openclaw onboard
+   ```
+2. When the wizard asks for **Model/Auth provider**, select **Custom Provider**.
+3. Set the **API URL** to your BondIt deployment (or local proxy):
+   ```
+   https://api.yourdomain.com/v1
+   ```
+4. Set the **API Key** to your exact BondIt token `launchId`. 
+   *(The BondIt backend uses this to fetch your token's live stats before sending the prompt to Anthropic/OpenAI).*
+5. Link your Telegram or Discord bot via the OpenClaw CLI/dashboard.
+
+Your OpenClaw bot will now answer community questions deterministically, bounded by your token's immutable charter.
+
 ## Development
 
 ```bash
