@@ -12,6 +12,7 @@ import { AppWalletProvider } from "@/components/wallet-provider";
 import { IntroModal } from "@/components/intro-modal";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bondit.lol"),
   title: "BondIt.lol — Agency-Based Token Launches",
   description: "Transparent Bundler v2 — Agency-Based Genesis + Liquidity Stewardship on Solana",
   icons: {

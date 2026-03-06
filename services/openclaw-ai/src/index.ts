@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { ReportGenerator } from "./reports";
 import { AnomalyDetector } from "./anomaly";
 import { QueryHandler } from "./queries";
+import { resolveProvider } from "./providers";
 import { logger } from "./logger";
 
 dotenv.config();
@@ -116,9 +117,10 @@ async function main() {
   });
   app.use(createRateLimiter(rateLimitWindowMs, rateLimitMaxRequests));
 
+  const aiProvider = resolveProvider();
   const reports = new ReportGenerator();
   const anomaly = new AnomalyDetector();
-  const queries = new QueryHandler();
+  const queries = new QueryHandler(aiProvider);
 
   type LaunchParams = { launchId: string };
   type QueryBody = { launchId?: string; question?: string };

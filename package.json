@@ -20,7 +20,6 @@
     "dev:ai": "npm run dev --workspace @bondit/ai"
   },
   "devDependencies": {
-    "@next/swc-win32-x64-msvc": "^14.1.0",
     "prettier": "^3.2.4",
     "typescript": "^5.3.3"
   }
