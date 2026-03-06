@@ -609,7 +609,7 @@ export function IntroModal() {
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem("bondit_intro_v2")) {
+      if (!localStorage.getItem("bondit_intro_v3")) {
         setVisible(true);
       }
     } catch {}
@@ -623,7 +623,7 @@ export function IntroModal() {
   }, []);
 
   function dismiss() {
-    try { localStorage.setItem("bondit_intro_v2", "1"); } catch {}
+    try { localStorage.setItem("bondit_intro_v3", "1"); } catch {}
     setVisible(false);
   }
 
