@@ -187,6 +187,62 @@ async function main() {
     }
   });
 
+  // OpenClaw proxy endpoint
+  // Matches OpenAI's /v1/chat/completions schema so OpenClaw can use BondIt as a Custom Provider
+  app.post("/v1/chat/completions", async (req: Request, res: Response) => {
+    try {
+      // 1. Extract the token launchId from the Bearer token
+      // OpenClaw users will supply their BondIt token ID as the API key in OpenClaw config
+      const authHeader = req.headers.authorization || "";
+      const launchIdMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+      const launchId = launchIdMatch ? launchIdMatch[1].trim() : "";
+
+      if (!isValidLaunchId(launchId)) {
+        res.status(401).json({ error: { message: "Invalid or missing launchId in Authorization header. Use 'Bearer <launchId>'.", type: "invalid_request_error" } });
+        return;
+      }
+
+      // 2. Extract the user's message from the OpenAI message array
+      const messages = Array.isArray(req.body.messages) ? req.body.messages : [];
+      const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === "user");
+      const question = normalizeQuestion(lastUserMessage?.content);
+
+      if (!question) {
+        res.status(400).json({ error: { message: "No valid user message found", type: "invalid_request_error" } });
+        return;
+      }
+
+      // 3. Delegate to QueryHandler to build context and prompt the actual LLM
+      const answer = await queries.handleQuery(launchId, question);
+
+      // 4. Return in standard OpenAI format
+      res.json({
+        id: `chatcmpl-${answer.promptHash}`,
+        object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model: answer.modelId,
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: `${answer.answer}\n\n_${answer.disclaimer}_`
+            },
+            finish_reason: "stop"
+          }
+        ],
+        usage: {
+          prompt_tokens: 0, // Mocked for proxy transparency
+          completion_tokens: 0,
+          total_tokens: 0
+        }
+      });
+    } catch (err) {
+      logger.error({ err }, "OpenClaw proxy chat completion failed");
+      res.status(500).json({ error: { message: "Internal server error", type: "server_error" } });
+    }
+  });
+
   // Health
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", role: "advisory_only", timestamp: Date.now() });
