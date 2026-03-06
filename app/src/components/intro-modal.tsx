@@ -14,7 +14,7 @@ const SLIDES = [
     id: "ai",
     subtitle: "Intelligence built-in",
     title: "OpenClaw AI Integration",
-    body: "Every BondIt launch gets its own dedicated AI agent. Connect your community chat directly to our OpenClaw AI to answer questions about token economics, charter parameters, and live distribution progress in real-time.",
+    body: "Every BondIt launch gets its own dedicated AI agent powered by your choice of Anthropic or OpenAI. Connect your community chat directly to our OpenClaw AI to answer questions about token economics, charter parameters, and live distribution progress in real-time.",
   },
   {
     id: "charter",
