@@ -6,10 +6,9 @@ import { Suspense, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppWalletProvider } from "../components/wallet-provider";
 import { WalletControls } from "../components/wallet-controls";
-import { LaunchActionLink } from "../components/launch-action-link";
 import { GlobalSearch } from "../components/global-search";
 import { CopyContractButton } from "../components/copy-contract";
-import { SidebarNav } from "../components/shell-nav";
+import { LaunchActionLink, SidebarNav } from "../components/shell-nav";
 import { IntroModal } from "../components/intro-modal";
 
 export function ClientLayout({
