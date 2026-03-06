@@ -608,11 +608,8 @@ export function IntroModal() {
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem("bondit_intro_v3")) {
-        setVisible(true);
-      }
-    } catch {}
+    // Show on every visit
+    setVisible(true);
 
     function handleReplay() {
       setSlide(0);
@@ -623,7 +620,6 @@ export function IntroModal() {
   }, []);
 
   function dismiss() {
-    try { localStorage.setItem("bondit_intro_v3", "1"); } catch {}
     setVisible(false);
   }
 
@@ -642,12 +638,13 @@ export function IntroModal() {
         {/* Top lime accent line */}
         <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#A9FF00] to-transparent flex-shrink-0" style={{animation:"glowLine 3s ease-in-out infinite"}}/>
 
-        {/* Close button */}
+        {/* Close button with subtle Skip label */}
         <button
           onClick={dismiss}
-          className="absolute top-3 right-3 text-[#56566A] hover:text-[#F1F1F4] transition-colors z-10 p-1 rounded-lg hover:bg-white/[0.06]"
+          className="absolute top-3 right-3 flex items-center gap-1.5 text-[#56566A] hover:text-[#F1F1F4] transition-colors z-10 p-1.5 rounded-lg hover:bg-white/[0.06] group"
           aria-label="Skip intro"
         >
+          <span className="text-[10px] font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">Skip</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
