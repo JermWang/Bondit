@@ -11,6 +11,12 @@ const SLIDES = [
     body: "pump.fun deploys your token and disappears. BondIt deploys and then actively stewards: managing LP on Meteora, compounding 99% of fees back into the pool, and releasing the treasury at a fixed daily rate. No dev dumps. No rug pulls. Deterministic from genesis.",
   },
   {
+    id: "cli",
+    subtitle: "Built for Agents",
+    title: "Headless CLI Orchestration",
+    body: "Spin up a launch in seconds. BondIt provides a headless CLI with Phantom wallet integration built-in. Define your parameters in a local config file, validate the rules, and simulate your launch before sending a single transaction.",
+  },
+  {
     id: "ai",
     subtitle: "Intelligence built-in",
     title: "OpenClaw AI Integration",
@@ -176,6 +182,90 @@ function VsSVG() {
       <style>{`
         @keyframes chartDraw{from{opacity:0;stroke-dashoffset:400;stroke-dasharray:400}to{opacity:1;stroke-dashoffset:0;stroke-dasharray:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      `}</style>
+    </svg>
+  );
+}
+
+function CliSVG() {
+  return (
+    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <pattern id="cligrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.04)" strokeWidth="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="320" height="240" fill="url(#cligrid)"/>
+
+      {/* Terminal Window */}
+      <g style={{animation:"fadeIn 0.5s ease-out both"}}>
+        <rect x="20" y="30" width="280" height="180" rx="6" fill="rgba(10,10,15,0.8)" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+        {/* Window Chrome */}
+        <rect x="20" y="30" width="280" height="24" rx="6" fill="rgba(255,255,255,0.03)"/>
+        <path d="M20 54 L300 54" stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
+        <circle cx="34" cy="42" r="3" fill="#FF3B5C" opacity="0.6"/>
+        <circle cx="46" cy="42" r="3" fill="#F59E0B" opacity="0.6"/>
+        <circle cx="58" cy="42" r="3" fill="#00FFB2" opacity="0.6"/>
+        <text x="160" y="45" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.4)" fontFamily="monospace">agent@bondit: ~</text>
+      </g>
+
+      {/* Terminal Content */}
+      <g fontFamily="monospace" fontSize="10" transform="translate(35, 75)">
+        {/* Command 1 */}
+        <g style={{animation:"typeLine1 0.1s steps(20) 0.5s both, hideCursor 0.1s 1.5s both"}}>
+          <text x="0" y="0" fill="#A9FF00">$</text>
+          <text x="12" y="0" fill="#F1F1F4" className="type-text1">bondit launch init --yes</text>
+          <rect x="156" y="-8" width="6" height="10" fill="#A9FF00" className="cursor1"/>
+        </g>
+        
+        {/* Output 1 */}
+        <g style={{animation:"fadeIn 0.2s ease-out 1.5s both"}}>
+          <text x="0" y="16" fill="#8B8FA3" fontSize="9">✔ Created bondit-launch.json</text>
+        </g>
+
+        {/* Command 2 */}
+        <g style={{animation:"typeLine2 0.1s steps(20) 2.2s both, hideCursor 0.1s 3.2s both"}}>
+          <text x="0" y="36" fill="#A9FF00">$</text>
+          <text x="12" y="36" fill="#F1F1F4" className="type-text2">bondit launch simulate</text>
+          <rect x="144" y="28" width="6" height="10" fill="#A9FF00" className="cursor2"/>
+        </g>
+
+        {/* Output 2 */}
+        <g style={{animation:"fadeIn 0.2s ease-out 3.2s both"}}>
+          <text x="0" y="52" fill="#8B8FA3" fontSize="9">⠋ Resolving Phantom wallet...</text>
+        </g>
+        <g style={{animation:"fadeIn 0.2s ease-out 4.0s both"}}>
+          <rect x="-2" y="43" width="160" height="12" fill="rgba(10,10,15,1)"/>
+          <text x="0" y="52" fill="#A9FF00" fontSize="9">✔ Simulation passed</text>
+          <text x="0" y="66" fill="#8B8FA3" fontSize="9">  Compute units: 142,500</text>
+        </g>
+
+        {/* Command 3 */}
+        <g style={{animation:"typeLine3 0.1s steps(20) 4.8s both"}}>
+          <text x="0" y="86" fill="#A9FF00">$</text>
+          <text x="12" y="86" fill="#F1F1F4" className="type-text3">bondit launch create</text>
+          <rect x="132" y="78" width="6" height="10" fill="#A9FF00" className="cursor3">
+            <animate attributeName="opacity" values="1;0;1" dur="0.8s" repeatCount="indefinite" />
+          </rect>
+        </g>
+
+        {/* Output 3 (Success Block) */}
+        <g style={{animation:"slideUpFade 0.4s ease-out 6.0s both"}}>
+          <rect x="-5" y="100" width="240" height="42" rx="4" fill="rgba(169,255,0,0.05)" stroke="rgba(169,255,0,0.2)" strokeWidth="1"/>
+          <text x="5" y="114" fill="#A9FF00" fontSize="9" fontWeight="bold">SUCCESS: Token is live on curve</text>
+          <text x="5" y="128" fill="#8B8FA3" fontSize="8.5">Mint: 7xK...9qL</text>
+          <text x="230" y="128" fill="#00FFB2" fontSize="8.5" textAnchor="end">copy</text>
+        </g>
+      </g>
+
+      <style>{`
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes slideUpFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes typeLine1{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+        @keyframes typeLine2{from{clip-path:inset(0 100% 0 0);opacity:0}1%{opacity:1}to{clip-path:inset(0 0 0 0);opacity:1}}
+        @keyframes typeLine3{from{clip-path:inset(0 100% 0 0);opacity:0}1%{opacity:1}to{clip-path:inset(0 0 0 0);opacity:1}}
+        @keyframes hideCursor{to{opacity:0;visibility:hidden}}
+        .type-text1,.type-text2,.type-text3{clip-path:inset(0 0 0 0)}
       `}</style>
     </svg>
   );
@@ -503,6 +593,7 @@ function TransparencySVG() {
 
 function SlideSVG({ id }: { id: string }) {
   if (id === "vs") return <VsSVG />;
+  if (id === "cli") return <CliSVG />;
   if (id === "ai") return <AiSVG />;
   if (id === "charter") return <CharterSVG />;
   if (id === "distribution") return <DistributionSVG />;
