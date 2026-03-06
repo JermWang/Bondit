@@ -44,58 +44,132 @@ function VsSVG() {
         <pattern id="igrid" width="20" height="20" patternUnits="userSpaceOnUse">
           <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.07)" strokeWidth="0.5"/>
         </pattern>
+        <linearGradient id="redFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FF3B5C" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="#FF3B5C" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id="greenFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#A9FF00" stopOpacity="0.2"/>
+          <stop offset="100%" stopColor="#A9FF00" stopOpacity="0"/>
+        </linearGradient>
       </defs>
       <rect width="320" height="240" fill="url(#igrid)"/>
 
-      {/* LEFT — pump.fun */}
-      <text x="72" y="32" textAnchor="middle" fontSize="12" fill="#FF3B5C" fontFamily="monospace" opacity="0.8">pump.fun</text>
-      <text x="72" y="48" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.25)" fontFamily="monospace">launches → leaves</text>
-      {/* Downward path */}
-      <path d="M72 65 C72 100 60 140 55 195" stroke="#FF3B5C" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.5"/>
-      {/* Falling rocket */}
-      <g style={{animation:"sinkDown 2.5s ease-in-out infinite alternate"}}>
-        <path d="M68 98 L72 74 L76 98 L74 106 L70 106Z" fill="#FF3B5C" opacity="0.8"/>
-        <path d="M68 106 L63 118 L72 110Z" fill="#FF3B5C" opacity="0.5"/>
-        <path d="M76 106 L81 118 L72 110Z" fill="#FF3B5C" opacity="0.5"/>
-      </g>
-      {/* Falling $ */}
-      <text x="45" y="140" fontSize="14" fill="#FF3B5C" opacity="0" style={{animation:"fallDollar 2s ease-in 0.4s infinite"}}>$</text>
-      <text x="85" y="155" fontSize="12" fill="#FF3B5C" opacity="0" style={{animation:"fallDollar 2s ease-in 1.1s infinite"}}>$</text>
-      <text x="55" y="170" fontSize="10" fill="#FF3B5C" opacity="0" style={{animation:"fallDollar 2s ease-in 0.8s infinite"}}>$</text>
-      {/* Abandoned label */}
-      <rect x="36" y="200" width="72" height="18" rx="4" fill="rgba(255,59,92,0.1)" stroke="rgba(255,59,92,0.3)" strokeWidth="1"/>
-      <text x="72" y="212" textAnchor="middle" fontSize="9" fill="#FF3B5C" fontFamily="monospace">abandoned</text>
+      {/* LEFT — pump.fun chart */}
+      <text x="72" y="24" textAnchor="middle" fontSize="11" fill="#FF3B5C" fontFamily="monospace" opacity="0.85">pump.fun</text>
 
-      {/* DIVIDER */}
-      <line x1="160" y1="20" x2="160" y2="220" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-      <text x="160" y="125" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.15)" fontFamily="monospace">VS</text>
+      {/* Axes */}
+      <line x1="18" y1="40" x2="18" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+      <line x1="18" y1="165" x2="140" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
 
-      {/* RIGHT — BondIt */}
-      <text x="248" y="32" textAnchor="middle" fontSize="12" fill="#A9FF00" fontFamily="monospace" opacity="0.9">bondit.lol</text>
-      <text x="248" y="48" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.25)" fontFamily="monospace">launches → stewards</text>
-      {/* Upward path */}
-      <path d="M248 195 C248 150 240 100 238 65" stroke="#A9FF00" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.4"/>
-      {/* Rising rocket */}
-      <g style={{animation:"riseUp 2.5s ease-in-out infinite alternate"}}>
-        <path d="M242 128 L248 104 L254 128 L251 136 L245 136Z" fill="#A9FF00"/>
-        <path d="M242 136 L235 148 L248 140Z" fill="#88CC00"/>
-        <path d="M254 136 L261 148 L248 140Z" fill="#88CC00"/>
-        <ellipse cx="248" cy="142" rx="4" ry="7" fill="#A9FF00" opacity="0.7" style={{animation:"flicker 0.25s ease-in-out infinite alternate"}}/>
+      {/* Pump-and-dump chart area fill */}
+      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163 L140 165 L22 165Z"
+        fill="url(#redFade)" style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
+      {/* Pump-and-dump chart line */}
+      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163"
+        stroke="#FF3B5C" strokeWidth="2" strokeLinecap="round" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
+
+      {/* Peak label */}
+      <g style={{animation:"fadeIn 0.5s ease-out 1s both"}}>
+        <text x="75" y="36" textAnchor="middle" fontSize="7" fill="#FF3B5C" fontFamily="monospace" opacity="0.7">ATH</text>
+        <line x1="75" y1="38" x2="75" y2="42" stroke="#FF3B5C" strokeWidth="0.5" opacity="0.5"/>
       </g>
-      {/* LP lock */}
-      <rect x="223" y="175" width="50" height="20" rx="4" fill="rgba(169,255,0,0.12)" stroke="rgba(169,255,0,0.4)" strokeWidth="1"/>
-      <text x="248" y="188" textAnchor="middle" fontSize="8.5" fill="#A9FF00" fontFamily="monospace">LP LOCKED</text>
-      {/* Stars */}
-      {[[205,75],[275,85],[215,115],[270,65],[230,65]].map(([cx,cy],i)=>(
-        <circle key={i} cx={cx} cy={cy} r="2" fill="#A9FF00" style={{animation:`twink ${1.2+i*0.3}s ease-in-out ${i*0.2}s infinite`}}/>
+
+      {/* Crash X markers */}
+      {[[95,115],[110,145],[125,158]].map(([cx,cy],i)=>(
+        <g key={i} style={{animation:`fadeIn 0.3s ease-out ${1.2+i*0.2}s both`}}>
+          <text x={cx} y={cy} textAnchor="middle" fontSize="10" fill="#FF3B5C" opacity="0.6">✕</text>
+        </g>
       ))}
 
+      {/* Problem labels */}
+      {[
+        {text:"no LP mgmt",y:178},
+        {text:"dev dumps",y:190},
+        {text:"abandoned",y:202},
+      ].map(({text,y},i)=>(
+        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.5+i*0.15}s both`}}>
+          <text x="12" y={y} fontSize="7.5" fill="#FF3B5C" fontFamily="monospace" opacity="0.55">✕ {text}</text>
+        </g>
+      ))}
+
+      {/* Flatline */}
+      <line x1="125" y1="163" x2="142" y2="163" stroke="#FF3B5C" strokeWidth="1" strokeDasharray="2 2" opacity="0.4"
+        style={{animation:"fadeIn 0.5s ease-out 1.8s both"}}/>
+
+      {/* DIVIDER */}
+      <line x1="160" y1="16" x2="160" y2="228" stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
+      <text x="160" y="122" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.12)" fontFamily="monospace">VS</text>
+
+      {/* RIGHT — BondIt chart */}
+      <text x="248" y="24" textAnchor="middle" fontSize="11" fill="#A9FF00" fontFamily="monospace" opacity="0.9">bondit.lol</text>
+
+      {/* Axes */}
+      <line x1="178" y1="40" x2="178" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+      <line x1="178" y1="165" x2="305" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+
+      {/* Guardrail zone (shaded band) */}
+      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68 L305 90 C290 97 270 106 250 115 C225 128 200 142 182 150Z"
+        fill="rgba(169,255,0,0.06)" stroke="none"
+        style={{animation:"fadeIn 0.8s ease-out 0.5s both"}}/>
+
+      {/* Upper guardrail */}
+      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68"
+        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
+      {/* Lower guardrail */}
+      <path d="M182 150 C200 142 225 128 250 115 C270 106 290 97 305 90"
+        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
+
+      {/* Steady growth chart area fill */}
+      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75 L305 165 L182 165Z"
+        fill="url(#greenFade)" style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
+      {/* Steady growth chart line */}
+      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75"
+        stroke="#A9FF00" strokeWidth="2" strokeLinecap="round" fill="none"
+        style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
+
+      {/* Guardrail label */}
+      <g style={{animation:"fadeIn 0.5s ease-out 1.2s both"}}>
+        <text x="308" y="65" fontSize="6.5" fill="rgba(169,255,0,0.45)" fontFamily="monospace">guardrails</text>
+      </g>
+
+      {/* Stewardship event dots on chart */}
+      {[
+        {cx:210,cy:138,label:"LP add"},
+        {cx:245,cy:108,label:"dist"},
+        {cx:280,cy:88,label:"compound"},
+      ].map(({cx,cy,label},i)=>(
+        <g key={label} style={{animation:`fadeIn 0.4s ease-out ${1.4+i*0.25}s both`}}>
+          <circle cx={cx} cy={cy} r="3" fill="#A9FF00" opacity="0.8">
+            <animate attributeName="r" values="3;4;3" dur="2s" begin={`${i*0.5}s`} repeatCount="indefinite"/>
+          </circle>
+          <text x={cx} y={cy-7} textAnchor="middle" fontSize="6" fill="rgba(169,255,0,0.6)" fontFamily="monospace">{label}</text>
+        </g>
+      ))}
+
+      {/* Benefit labels */}
+      {[
+        {text:"managed LP",y:178},
+        {text:"treasury decay",y:190},
+        {text:"fee compounding",y:202},
+      ].map(({text,y},i)=>(
+        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.8+i*0.15}s both`}}>
+          <text x="178" y={y} fontSize="7.5" fill="#A9FF00" fontFamily="monospace" opacity="0.6">✓ {text}</text>
+        </g>
+      ))}
+
+      {/* Flight mode badge */}
+      <g style={{animation:"fadeIn 0.5s ease-out 2.3s both"}}>
+        <rect x="178" y="210" width="74" height="16" rx="4" fill="rgba(0,255,178,0.1)" stroke="rgba(0,255,178,0.3)" strokeWidth="1"/>
+        <text x="215" y="221" textAnchor="middle" fontSize="7" fill="#00FFB2" fontFamily="monospace">→ flight mode</text>
+      </g>
+
       <style>{`
-        @keyframes sinkDown{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(40px) rotate(15deg)}}
-        @keyframes riseUp{0%{transform:translateY(0)}100%{transform:translateY(-30px)}}
-        @keyframes fallDollar{0%{opacity:.7;transform:translateY(0)}100%{opacity:0;transform:translateY(45px)}}
-        @keyframes flicker{0%{transform:scaleY(1)}100%{transform:scaleY(1.5)}}
-        @keyframes twink{0%,100%{opacity:.2}50%{opacity:1}}
+        @keyframes chartDraw{from{opacity:0;stroke-dashoffset:400;stroke-dasharray:400}to{opacity:1;stroke-dashoffset:0;stroke-dasharray:none}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
     </svg>
   );
@@ -197,6 +271,12 @@ function DistributionSVG() {
 }
 
 function FlightSVG() {
+  const gauges = [
+    { label: "Holders", value: "14.8K", target: "15K", pct: 98, color: "#A9FF00", delay: 0.1 },
+    { label: "Top-10 Conc.", value: "17.2%", target: "< 18%", pct: 96, color: "#06B6D4", delay: 0.3 },
+    { label: "Treasury Left", value: "4.1%", target: "< 5%", pct: 92, color: "#F59E0B", delay: 0.5 },
+  ];
+
   return (
     <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       <defs>
@@ -205,33 +285,97 @@ function FlightSVG() {
         </pattern>
       </defs>
       <rect width="320" height="240" fill="url(#fgrid)"/>
-      {/* Three conditions */}
-      {[
-        {label:"≥ 15K Holders",sub:"community depth",color:"#A9FF00",x:55},
-        {label:"Top-10 < 18%",sub:"low concentration",color:"white",x:160},
-        {label:"Treasury ≤ 5%",sub:"supply distributed",color:"#F59E0B",x:265},
-      ].map(({label,sub,color,x},i)=>(
-        <g key={label} style={{animation:`popUp 0.5s ease-out ${i*0.2}s both`}}>
-          <circle cx={x} cy="85" r="40" fill={`${color}12`} stroke={color} strokeWidth="2"/>
-          <text x={x} y="77" textAnchor="middle" fontSize="10.5" fill={color} fontFamily="monospace" fontWeight="bold">{label}</text>
-          <text x={x} y="93" textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.4)">{sub}</text>
-          <circle cx={x+26} cy={55} r="10" fill={`${color}25`} stroke={color} strokeWidth="1.5" style={{animation:`pulse 1.8s ease-in-out ${i*0.3}s infinite`}}/>
-          <text x={x+26} y={60} textAnchor="middle" fontSize="11" fill={color}>✓</text>
-        </g>
-      ))}
-      {/* Converging arrows */}
-      <path d="M55 130 Q55 165 160 180" stroke="rgba(169,255,0,0.5)" strokeWidth="2" fill="none"/>
-      <path d="M160 130 L160 180" stroke="rgba(6,182,212,0.5)" strokeWidth="2"/>
-      <path d="M265 130 Q265 165 160 180" stroke="rgba(245,158,11,0.5)" strokeWidth="2" fill="none"/>
-      {/* Flight mode box */}
-      <rect x="80" y="180" width="160" height="42" rx="10" fill="rgba(0,255,178,0.1)" stroke="#00FFB2" strokeWidth="2.5">
-        <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
-      </rect>
-      <text x="160" y="200" textAnchor="middle" fontSize="13" fill="#00FFB2" fontFamily="monospace" fontWeight="bold">FLIGHT MODE</text>
-      <text x="160" y="214" textAnchor="middle" fontSize="9" fill="rgba(0,255,178,0.55)" fontFamily="monospace">guardrails off · community owns LP</text>
+
+      {/* Header */}
+      <text x="160" y="20" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.3)" fontFamily="monospace">FLIGHT READINESS</text>
+
+      {/* Three gauge rows */}
+      {gauges.map(({ label, value, target, pct, color, delay }, i) => {
+        const y = 38 + i * 48;
+        const barW = 190;
+        const fillW = (pct / 100) * barW;
+        return (
+          <g key={label} style={{animation:`fadeIn 0.5s ease-out ${delay}s both`}}>
+            {/* Label row */}
+            <text x="18" y={y} fontSize="9" fill={color} fontFamily="monospace" fontWeight="bold">{label}</text>
+            <text x="302" y={y} textAnchor="end" fontSize="8" fill="rgba(255,255,255,0.35)" fontFamily="monospace">{value} / {target}</text>
+
+            {/* Track */}
+            <rect x="18" y={y + 6} width={barW} height="14" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5"/>
+
+            {/* Fill bar */}
+            <rect x="18" y={y + 6} width={fillW} height="14" rx="4" fill={`${color}30`}
+              style={{animation:`barGrow 1.8s ease-out ${delay + 0.2}s both`, transformOrigin:"18px 0"}}/>
+
+            {/* Glow edge on fill */}
+            <rect x={18 + fillW - 2} y={y + 6} width="2" height="14" rx="1" fill={color} opacity="0.7"
+              style={{animation:`barGrow 1.8s ease-out ${delay + 0.2}s both`}}>
+              <animate attributeName="opacity" values="0.5;0.9;0.5" dur="1.5s" repeatCount="indefinite"/>
+            </rect>
+
+            {/* Percentage */}
+            <text x={18 + fillW - 8} y={y + 16} fontSize="8" fill={color} fontFamily="monospace" fontWeight="bold" opacity="0.9"
+              style={{animation:`fadeIn 0.4s ease-out ${delay + 0.8}s both`}}>{pct}%</text>
+
+            {/* Threshold marker line */}
+            <line x1={18 + barW} y1={y + 4} x2={18 + barW} y2={y + 22} stroke={color} strokeWidth="1" strokeDasharray="2 2" opacity="0.35"/>
+
+            {/* Checkmark (appears after bar fills) */}
+            <g style={{animation:`popCheck 0.4s ease-out ${delay + 1.4}s both`}}>
+              <circle cx="228" cy={y + 13} r="8" fill={`${color}18`} stroke={color} strokeWidth="1.2"/>
+              <path d={`M223.5 ${y + 13} L226.5 ${y + 16} L232.5 ${y + 9}`} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </g>
+
+            {/* Status text */}
+            <text x="248" y={y + 16} fontSize="7" fill={color} fontFamily="monospace" opacity="0.6"
+              style={{animation:`fadeIn 0.3s ease-out ${delay + 1.6}s both`}}>
+              {pct >= 95 ? "READY" : "IN PROGRESS"}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Runway / timeline */}
+      <g style={{animation:"fadeIn 0.6s ease-out 1.2s both"}}>
+        {/* Track line */}
+        <line x1="30" y1="195" x2="290" y2="195" stroke="rgba(255,255,255,0.06)" strokeWidth="2" strokeLinecap="round"/>
+
+        {/* Filled progress */}
+        <line x1="30" y1="195" x2="270" y2="195" stroke="rgba(0,255,178,0.3)" strokeWidth="2" strokeLinecap="round"
+          style={{animation:"runwayFill 2s ease-out 1.4s both"}}/>
+
+        {/* Milestone dots */}
+        {[
+          { x: 30, label: "Genesis", done: true },
+          { x: 100, label: "Curve", done: true },
+          { x: 170, label: "Stewardship", done: true },
+          { x: 240, label: "Conditions", done: true },
+        ].map(({ x, label, done }, i) => (
+          <g key={label} style={{animation:`fadeIn 0.3s ease-out ${1.3 + i * 0.15}s both`}}>
+            <circle cx={x} cy="195" r="4" fill={done ? "rgba(0,255,178,0.3)" : "rgba(255,255,255,0.08)"} stroke={done ? "#00FFB2" : "rgba(255,255,255,0.15)"} strokeWidth="1.2"/>
+            <text x={x} y="208" textAnchor="middle" fontSize="6.5" fill={done ? "rgba(0,255,178,0.55)" : "rgba(255,255,255,0.2)"} fontFamily="monospace">{label}</text>
+          </g>
+        ))}
+      </g>
+
+      {/* Flight Mode destination */}
+      <g style={{animation:"popCheck 0.5s ease-out 2.2s both"}}>
+        <rect x="260" y="183" width="52" height="24" rx="6" fill="rgba(0,255,178,0.1)" stroke="#00FFB2" strokeWidth="1.5">
+          <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+        </rect>
+        <text x="286" y="198" textAnchor="middle" fontSize="7.5" fill="#00FFB2" fontFamily="monospace" fontWeight="bold">FLIGHT</text>
+      </g>
+
+      {/* Bottom label */}
+      <text x="160" y="230" textAnchor="middle" fontSize="7.5" fill="rgba(255,255,255,0.2)" fontFamily="monospace">
+        all conditions met → guardrails off · community owns LP
+      </text>
+
       <style>{`
-        @keyframes popUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+        @keyframes popCheck{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+        @keyframes runwayFill{from{stroke-dashoffset:260;stroke-dasharray:260}to{stroke-dashoffset:0;stroke-dasharray:260}}
       `}</style>
     </svg>
   );
