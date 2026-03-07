@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/referral-payout",
       "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/keeper?job=monitor",
-      "schedule": "0 * * * *"
     }
   ]
 }
