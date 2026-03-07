@@ -175,3 +175,71 @@ CREATE TABLE IF NOT EXISTS vanity_backlog (
 
 CREATE INDEX IF NOT EXISTS idx_vanity_backlog_unclaimed ON vanity_backlog(suffix, id) WHERE claimed_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_vanity_backlog_claimed ON vanity_backlog(claimed_at) WHERE claimed_at IS NOT NULL;
+
+-- ═══ Referral System ═══════════════════════════════════════════════════════
+
+-- Referral codes: each wallet gets one unique code
+CREATE TABLE IF NOT EXISTS referral_codes (
+    id              BIGSERIAL PRIMARY KEY,
+    wallet          TEXT NOT NULL UNIQUE,
+    code            TEXT NOT NULL UNIQUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code);
+CREATE INDEX IF NOT EXISTS idx_referral_codes_wallet ON referral_codes(wallet);
+
+-- Referral attributions: who referred whom (one-time link)
+CREATE TABLE IF NOT EXISTS referral_attributions (
+    id              BIGSERIAL PRIMARY KEY,
+    referee_wallet  TEXT NOT NULL UNIQUE,        -- the new user
+    referrer_wallet TEXT NOT NULL,                -- who referred them
+    referrer_code   TEXT NOT NULL,                -- code used
+    tier            SMALLINT NOT NULL DEFAULT 1,  -- 1 = direct, 2 = second-degree
+    attributed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_attr_referrer ON referral_attributions(referrer_wallet);
+CREATE INDEX IF NOT EXISTS idx_referral_attr_referee ON referral_attributions(referee_wallet);
+
+-- Referral earnings: per-trade fee credits accrued to referrers
+CREATE TABLE IF NOT EXISTS referral_earnings (
+    id              BIGSERIAL PRIMARY KEY,
+    referrer_wallet TEXT NOT NULL,
+    referee_wallet  TEXT NOT NULL,
+    launch_id       TEXT NOT NULL,
+    trade_tx        TEXT NOT NULL,
+    tier            SMALLINT NOT NULL DEFAULT 1,  -- 1 = direct (50%), 2 = second-degree (15%)
+    fee_lamports    BIGINT NOT NULL,              -- total fee on the trade
+    earned_lamports BIGINT NOT NULL,              -- referrer's share
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_earnings_referrer ON referral_earnings(referrer_wallet, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_referral_earnings_trade ON referral_earnings(trade_tx);
+
+-- Referral payouts: processed withdrawals from referral vault
+CREATE TABLE IF NOT EXISTS referral_payouts (
+    id              BIGSERIAL PRIMARY KEY,
+    referrer_wallet TEXT NOT NULL,
+    amount_lamports BIGINT NOT NULL,
+    tx_signature    TEXT,
+    status          TEXT NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at    TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_payouts_wallet ON referral_payouts(referrer_wallet, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_referral_payouts_status ON referral_payouts(status) WHERE status != 'completed';
+
+-- Referral anti-gaming: cooldown and rate tracking
+CREATE TABLE IF NOT EXISTS referral_cooldowns (
+    id              BIGSERIAL PRIMARY KEY,
+    wallet          TEXT NOT NULL,
+    action_type     TEXT NOT NULL,           -- 'trade', 'attribution'
+    window_start    TIMESTAMPTZ NOT NULL,
+    action_count    INTEGER NOT NULL DEFAULT 1,
+    UNIQUE(wallet, action_type, window_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_cooldowns_wallet ON referral_cooldowns(wallet, action_type, window_start DESC);

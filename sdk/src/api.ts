@@ -234,3 +234,74 @@ export interface QueryResponse {
   timestamp: number;
   disclaimer: string;
 }
+
+// ── Referral System ────────────────────────────────────────────────────────
+
+export interface ReferralCodeResponse {
+  wallet: string;
+  code: string;
+  created_at: string;
+}
+
+export interface ReferralResolveResponse {
+  code: string;
+  referrer_wallet: string;
+}
+
+export interface ReferralAttributionResponse {
+  status: "attributed" | "already_attributed";
+  referee_wallet: string;
+  referrer_wallet?: string;
+  second_degree_referrer?: string | null;
+}
+
+export interface ReferralStatsResponse {
+  wallet: string;
+  code: string;
+  referral_link: string;
+  total_referrals: number;
+  active_referees: number;
+  total_earned_lamports: string;
+  earned_24h_lamports: string;
+  earned_7d_lamports: string;
+  total_paid_lamports: string;
+  pending_balance_lamports: string;
+  total_trades_referred: number;
+}
+
+export interface ReferralEarningEntry {
+  referee_wallet: string;
+  launch_id: string;
+  trade_tx: string;
+  tier: 1 | 2;
+  fee_lamports: string;
+  earned_lamports: string;
+  created_at: string;
+}
+
+export interface ReferralEarningsResponse {
+  wallet: string;
+  earnings: ReferralEarningEntry[];
+  totals: {
+    total_earned_lamports: string;
+    total_trades: number;
+    unique_referees: number;
+  };
+}
+
+export interface RecordTradeEarningRequest {
+  trader: string;
+  launch_id: string;
+  trade_tx: string;
+  fee_lamports: string;
+  referral_pool_lamports: string;
+}
+
+export interface RecordTradeEarningResponse {
+  status: "recorded" | "no_referrer" | "already_recorded" | "skipped";
+  tier1_referrer?: string;
+  tier1_earned?: string;
+  tier2_earned?: string;
+  airdrop_pool?: string;
+  reason?: string;
+}

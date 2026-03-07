@@ -9,6 +9,7 @@ import { WalletControls } from "../components/wallet-controls";
 import { GlobalSearch } from "../components/global-search";
 import { LaunchActionLink, SidebarNav } from "../components/shell-nav";
 import { IntroModal } from "../components/intro-modal";
+import { captureReferralCode, sendAttribution } from "../lib/referral";
 
 export function ClientLayout({
   children,
@@ -22,6 +23,11 @@ export function ClientLayout({
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  // Capture referral code from URL on mount
+  useEffect(() => {
+    captureReferralCode();
+  }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {

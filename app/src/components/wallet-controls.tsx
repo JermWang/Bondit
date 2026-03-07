@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { sendAttribution } from "../lib/referral";
 
 function shortenAddress(address: string) {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
@@ -9,6 +11,13 @@ function shortenAddress(address: string) {
 
 export function WalletControls() {
   const { connected, publicKey } = useWallet();
+
+  // Send referral attribution when wallet connects
+  useEffect(() => {
+    if (connected && publicKey) {
+      sendAttribution(publicKey.toBase58());
+    }
+  }, [connected, publicKey]);
 
   return (
     <div className="flex items-center gap-3">
