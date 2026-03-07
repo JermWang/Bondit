@@ -2,11 +2,5 @@
   "installCommand": "npm install --no-package-lock --legacy-peer-deps",
   "buildCommand": "npm run build --workspace @bondit/sdk && npm run build --workspace @bondit/app",
   "outputDirectory": "app/.next",
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/cron/referral-payout",
-      "schedule": "*/30 * * * *"
-    }
-  ]
+  "framework": "nextjs"
 }
