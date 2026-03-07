@@ -142,13 +142,13 @@ export async function GET(req: NextRequest) {
 
     push(`Vault balance: ${(Number(vaultBalance) / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
-    if (availableBalance <= 0n) {
+    if (availableBalance <= BigInt(0)) {
       push("Vault balance too low — skipping");
       return NextResponse.json({ status: "ok", log, payouts_processed: 0, reason: "low_balance" });
     }
 
     // 5. Process payouts
-    let totalPaid = 0n;
+    let totalPaid = BigInt(0);
     let successCount = 0;
     let failCount = 0;
 
@@ -182,7 +182,7 @@ export async function GET(req: NextRequest) {
           SystemProgram.transfer({
             fromPubkey: vaultKp.publicKey,
             toPubkey: new PublicKey(payout.referrer_wallet),
-            lamports: amount,
+            lamports: Number(amount),
           }),
         );
 
