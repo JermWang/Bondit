@@ -31,8 +31,9 @@ const DEFAULT_CHARTER: CharterSnapshot = {
   flightTreasuryRemainingBps: 500,
   maxStewardshipDuration: 15552000,
   houseFeeEndsAtFlight: true,
-  feeSplitLpBps: 9900,
-  feeSplitHouseBps: 100,
+  feeSplitLpBps: 7000,
+  feeSplitHouseBps: 2000,
+  feeSplitReferralBps: 1000,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;

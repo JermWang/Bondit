@@ -5,10 +5,10 @@ use anchor_spl::associated_token::AssociatedToken;
 declare_id!("AVlt1111111111111111111111111111111111111111");
 
 pub mod constants {
-    /// Agency treasury allocation: 150M tokens (15%)
-    pub const AGENCY_TREASURY: u64 = 150_000_000;
-    /// LP reserve allocation: 50M tokens (5%)
-    pub const LP_RESERVE: u64 = 50_000_000;
+    /// Agency treasury allocation: 100M tokens (10%)
+    pub const AGENCY_TREASURY: u64 = 100_000_000;
+    /// LP reserve allocation: 150M tokens (15%) — deep liquidity at graduation
+    pub const LP_RESERVE: u64 = 150_000_000;
     /// Token decimals
     pub const TOKEN_DECIMALS: u8 = 6;
     /// Treasury in smallest units
@@ -419,10 +419,12 @@ pub struct Charter {
     pub max_stewardship_duration: i64,
     /// Whether house fee stops at flight mode
     pub house_fee_ends_at_flight: bool,
-    /// Fee split LP bps (9900 = 99%)
+    /// Fee split LP bps (7000 = 70%)
     pub fee_split_lp_bps: u16,
-    /// Fee split house bps (100 = 1%)
+    /// Fee split house bps (2000 = 20%)
     pub fee_split_house_bps: u16,
+    /// Fee split referral pool bps (1000 = 10%)
+    pub fee_split_referral_bps: u16,
 }
 
 impl Charter {
@@ -444,8 +446,9 @@ impl Charter {
             flight_treasury_remaining_bps: 500,     // 5%
             max_stewardship_duration: 180 * 86400,  // 180 days
             house_fee_ends_at_flight: true,
-            fee_split_lp_bps: 9900,                 // 99%
-            fee_split_house_bps: 100,               // 1%
+            fee_split_lp_bps: 7000,                 // 70%
+            fee_split_house_bps: 2000,               // 20%
+            fee_split_referral_bps: 1000,            // 10%
         }
     }
 }

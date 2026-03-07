@@ -91,6 +91,7 @@ export interface CharterSnapshot {
   houseFeeEndsAtFlight: boolean;
   feeSplitLpBps: number;
   feeSplitHouseBps: number;
+  feeSplitReferralBps: number;
 }
 
 export interface LaunchCharterResponse {

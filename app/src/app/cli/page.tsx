@@ -111,6 +111,34 @@ export default function CLIPage() {
         <p className="text-[10px] text-[#4C5D84] mt-2">Returns charter params, curve progress, stewardship state, and flight mode eligibility.</p>
       </div>
 
+      {/* ═══ VANITY ADDRESSES ═══ */}
+      <div className="glass-card glass-card-glow mb-6">
+        <h2 className="font-display text-lg font-semibold text-[#F1F1F4] mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#A9FF00] shadow-[0_0_6px_rgba(169,255,0,0.5)]" />
+          Vanity Addresses
+        </h2>
+        <p className="text-[12px] text-[#8B8FA3] leading-relaxed mb-4">
+          Every BondIt launch can grind for a branded token mint address ending in <code className="text-[#A9FF00] font-semibold">LoL</code>. The CLI uses multi-threaded search across all CPU cores to find a matching idempotency key.
+        </p>
+        <div className="space-y-2 mb-4">
+          <div className="bg-white/[0.04] rounded-lg px-4 py-3 font-mono text-[12px] text-[#F1F1F4]">
+            <code>npx @bondit/cli vanity</code>
+            <span className="text-[#4C5D84] ml-3">{"# default: --suffix LoL"}</span>
+          </div>
+          <div className="bg-white/[0.04] rounded-lg px-4 py-3 font-mono text-[12px] text-[#F1F1F4]">
+            <code>npx @bondit/cli vanity --suffix bondit</code>
+            <span className="text-[#4C5D84] ml-3">{"# custom suffix"}</span>
+          </div>
+          <div className="bg-white/[0.04] rounded-lg px-4 py-3 font-mono text-[12px] text-[#F1F1F4]">
+            <code>npx @bondit/cli launch create --vanity</code>
+            <span className="text-[#4C5D84] ml-3">{"# grind + launch in one step"}</span>
+          </div>
+        </div>
+        <p className="text-[10px] text-[#4C5D84] leading-relaxed">
+          Saves the winning key to <code className="text-[#8B8FA3]">bondit-launch.json</code> automatically. 3-char suffix ≈ seconds, 4-char ≈ minutes, 5+ ≈ longer. Base58 excludes 0, O, I, l — use <code className="text-[#A9FF00]">LoL</code> not <code className="text-[#FF3B5C]">LOL</code>.
+        </p>
+      </div>
+
       {/* ═══ WALLET PROVIDERS ═══ */}
       <div className="glass-card mb-6">
         <h2 className="font-display text-lg font-semibold text-[#F1F1F4] mb-3 flex items-center gap-2">

@@ -4,6 +4,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useState } from "react";
 import { buildCreateLaunchTransaction } from "@/lib/launch-transaction";
+import { useVanitySearch } from "@/lib/use-vanity-search";
 
 function shortenAddress(address: string) {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
@@ -21,7 +22,6 @@ export default function LaunchPage() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [uri, setUri] = useState("");
-  const [idempotencyKey, setIdempotencyKey] = useState("");
   const [mode, setMode] = useState<"native" | "pumproute">("native");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +32,12 @@ export default function LaunchPage() {
     tokenMint: string;
   } | null>(null);
 
+  const vanity = useVanitySearch();
+
   const trimmedName = name.trim();
   const trimmedSymbol = symbol.trim().toUpperCase();
   const trimmedUri = uri.trim();
-  const trimmedIdempotencyKey = idempotencyKey.trim();
-  const canSubmit = connected && publicKey && trimmedName && trimmedSymbol && trimmedUri && !isSubmitting;
+  const canSubmit = connected && publicKey && trimmedName && trimmedSymbol && trimmedUri && !isSubmitting && vanity.status !== "searching";
 
   async function handleLaunch() {
     if (!publicKey || !sendTransaction || !trimmedName || !trimmedSymbol || !trimmedUri) {
@@ -48,13 +49,43 @@ export default function LaunchPage() {
     setSuccess(null);
 
     try {
+      // All BondIt launches use vanity mint addresses ending with LoL
+      // Try the pre-ground backlog API first (instant), fall back to browser grinding
+      let vanityKey: string | null = null;
+
+      const indexerUrl = process.env.NEXT_PUBLIC_INDEXER_API_URL;
+      if (indexerUrl) {
+        try {
+          const resp = await fetch(`${indexerUrl}/api/vanity/claim`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ suffix: "LoL", claimedBy: publicKey.toBase58() }),
+            signal: AbortSignal.timeout(5000),
+          });
+          if (resp.ok) {
+            const data = (await resp.json()) as { idempotencyKey: string; mintAddress: string };
+            vanityKey = data.idempotencyKey;
+          }
+        } catch {
+          // Backlog unavailable — fall through to browser grind
+        }
+      }
+
+      if (!vanityKey) {
+        const vanityResult = await vanity.search("LoL", "mint");
+        if (!vanityResult) {
+          throw new Error("Vanity address search failed. Please try again.");
+        }
+        vanityKey = vanityResult.idempotencyKey;
+      }
+
       const build = await buildCreateLaunchTransaction({
         creator: publicKey,
         name: trimmedName,
         symbol: trimmedSymbol,
         uri: trimmedUri,
         mode,
-        idempotencyKey: trimmedIdempotencyKey || undefined,
+        idempotencyKey: vanityKey,
       });
 
       const existing = await connection.getAccountInfo(build.pdas.launchState.address);
@@ -149,10 +180,21 @@ export default function LaunchPage() {
                 <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Metadata URI</label>
                 <input type="url" value={uri} onChange={(event) => setUri(event.target.value)} placeholder="https://.../metadata.json" className="glass-input w-full px-4 py-3 text-[14px]" />
               </div>
-              <div>
-                <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Idempotency Key</label>
-                <input type="text" value={idempotencyKey} onChange={(event) => setIdempotencyKey(event.target.value)} placeholder="Optional stable key for safe retries" className="glass-input w-full px-4 py-3 text-[14px]" />
-                <p className="text-[11px] text-[#8B8FA3] mt-2">Leave blank to auto-generate a fresh launch ID. Reuse a key only when you want retry-safe resubmission behavior.</p>
+              {/* Vanity address info */}
+              <div className="px-3 py-2.5 rounded-xl bg-[#A9FF00]/[0.06] border border-[#A9FF00]/[0.12]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#A9FF00] shadow-[0_0_6px_rgba(169,255,0,0.5)]" />
+                  <span className="text-[11px] font-semibold text-[#A9FF00] uppercase tracking-wider">Vanity Address</span>
+                </div>
+                <p className="text-[11px] text-[#8B8FA3] leading-relaxed">
+                  Every BondIt launch automatically grinds for a branded token mint ending in <code className="text-[#A9FF00] font-semibold">LoL</code>. This runs in your browser using all available CPU cores.
+                </p>
+                {vanity.status === "found" && vanity.result ? (
+                  <div className="mt-2 text-[11px] font-mono text-[#8B8FA3]">
+                    Last found: <span className="text-[#A9FF00]">{vanity.result.mintAddress.slice(0, 6)}...{vanity.result.mintAddress.slice(-3)}</span>
+                    <span className="text-[#4E5168]"> ({vanity.result.duration.toFixed(1)}s, {vanity.result.attemptsPerSecond.toLocaleString()}/sec)</span>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -197,7 +239,13 @@ export default function LaunchPage() {
             className="btn-glow w-full !py-4 text-[15px] disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             disabled={!canSubmit}
           >
-            {isSubmitting ? "Submitting Launch..." : connected ? "Launch Token On-Chain" : "Connect Wallet to Launch"}
+            {vanity.status === "searching"
+              ? `Grinding vanity address... ${vanity.progress.totalAttempts.toLocaleString()} attempts (${vanity.progress.rate.toLocaleString()}/sec)`
+              : isSubmitting
+                ? "Submitting Launch..."
+                : connected
+                  ? "Launch Token On-Chain"
+                  : "Connect Wallet to Launch"}
           </button>
 
           {error ? (
@@ -249,12 +297,13 @@ export default function LaunchPage() {
             <div className="space-y-4">
               {[
                 { label: "Total Supply", value: "1,000,000,000", accent: false },
-                { label: "Curve Supply", value: "800M (80%)", accent: false },
-                { label: "Treasury", value: "150M (15%)", accent: true },
-                { label: "LP Reserve", value: "50M (5%)", accent: false },
-                { label: "Graduation Target", value: "85 SOL", accent: true },
-                { label: "Protocol Fee", value: mode === "native" ? "1% (100 bps)" : "Route dependent", accent: false },
-                { label: "Fee Split", value: "99% LP / 1% House", accent: true },
+                { label: "Curve Supply", value: "700M (70%)", accent: false },
+                { label: "LP Reserve", value: "150M (15%)", accent: true },
+                { label: "Treasury", value: "100M (10%)", accent: false },
+                { label: "Ecosystem Fund", value: "50M (5%)", accent: true },
+                { label: "Graduation Target", value: "85 SOL", accent: false },
+                { label: "Protocol Fee", value: mode === "native" ? "2% (200 bps)" : "Route dependent", accent: true },
+                { label: "Fee Split", value: "70% LP / 20% House / 10% Referral", accent: false },
                 { label: "Daily Release", value: "0.20% remaining", accent: false },
                 { label: "Max Daily", value: "1,000,000 tokens", accent: false },
                 { label: "Max Weekly", value: "5,000,000 tokens", accent: false },

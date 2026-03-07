@@ -8,16 +8,18 @@ declare_id!("BCrv1111111111111111111111111111111111111111");
 pub mod constants {
     /// Total token supply: 1 billion
     pub const TOTAL_SUPPLY: u64 = 1_000_000_000;
-    /// Tokens allocated to bonding curve: 800M (80%)
-    pub const CURVE_SUPPLY: u64 = 800_000_000;
+    /// Tokens allocated to bonding curve: 700M (70%)
+    pub const CURVE_SUPPLY: u64 = 700_000_000;
     /// SOL target for graduation: 85 SOL (in lamports)
     pub const GRADUATION_SOL_TARGET: u64 = 85_000_000_000;
-    /// Protocol fee: 100 basis points (1%)
-    pub const CURVE_PROTOCOL_FEE_BPS: u16 = 100;
-    /// Fee split to LP accumulator: 99%
-    pub const FEE_SPLIT_LP_BPS: u16 = 9900;
-    /// Fee split to house: 1%
-    pub const FEE_SPLIT_HOUSE_BPS: u16 = 100;
+    /// Protocol fee: 200 basis points (2%)
+    pub const CURVE_PROTOCOL_FEE_BPS: u16 = 200;
+    /// Fee split to LP accumulator: 70%
+    pub const FEE_SPLIT_LP_BPS: u16 = 7000;
+    /// Fee split to house: 20%
+    pub const FEE_SPLIT_HOUSE_BPS: u16 = 2000;
+    /// Fee split to referral pool: 10%
+    pub const FEE_SPLIT_REFERRAL_BPS: u16 = 1000;
     /// Token decimals
     pub const TOKEN_DECIMALS: u8 = 6;
     /// Curve supply in smallest units
@@ -126,13 +128,22 @@ pub mod bonding_curve {
             ],
         )?;
 
-        // Transfer fee: 99% to fee_accumulator, 1% to house
+        // Transfer fee: 70% to LP, 20% to house, 10% to referral pool
         let fee_to_lp = fee
             .checked_mul(constants::FEE_SPLIT_LP_BPS as u64)
             .unwrap()
             .checked_div(10_000)
             .unwrap();
-        let fee_to_house = fee.checked_sub(fee_to_lp).unwrap();
+        let fee_to_house = fee
+            .checked_mul(constants::FEE_SPLIT_HOUSE_BPS as u64)
+            .unwrap()
+            .checked_div(10_000)
+            .unwrap();
+        let fee_to_referral = fee
+            .checked_sub(fee_to_lp)
+            .unwrap()
+            .checked_sub(fee_to_house)
+            .unwrap();
 
         if fee_to_lp > 0 {
             let transfer_fee_lp_ix = anchor_lang::solana_program::system_instruction::transfer(
@@ -161,6 +172,22 @@ pub mod bonding_curve {
                 &[
                     ctx.accounts.buyer.to_account_info(),
                     ctx.accounts.house_vault.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+            )?;
+        }
+
+        if fee_to_referral > 0 {
+            let transfer_fee_ref_ix = anchor_lang::solana_program::system_instruction::transfer(
+                &ctx.accounts.buyer.key(),
+                &ctx.accounts.referral_vault.key(),
+                fee_to_referral,
+            );
+            anchor_lang::solana_program::program::invoke(
+                &transfer_fee_ref_ix,
+                &[
+                    ctx.accounts.buyer.to_account_info(),
+                    ctx.accounts.referral_vault.to_account_info(),
                     ctx.accounts.system_program.to_account_info(),
                 ],
             )?;
@@ -288,13 +315,22 @@ pub mod bonding_curve {
         **ctx.accounts.sol_vault.to_account_info().try_borrow_mut_lamports()? -= sol_out;
         **ctx.accounts.buyer.to_account_info().try_borrow_mut_lamports()? += sol_out;
 
-        // Transfer fee splits
+        // Transfer fee splits: 70% LP, 20% house, 10% referral
         let fee_to_lp = fee
             .checked_mul(constants::FEE_SPLIT_LP_BPS as u64)
             .unwrap()
             .checked_div(10_000)
             .unwrap();
-        let fee_to_house = fee.checked_sub(fee_to_lp).unwrap();
+        let fee_to_house = fee
+            .checked_mul(constants::FEE_SPLIT_HOUSE_BPS as u64)
+            .unwrap()
+            .checked_div(10_000)
+            .unwrap();
+        let fee_to_referral = fee
+            .checked_sub(fee_to_lp)
+            .unwrap()
+            .checked_sub(fee_to_house)
+            .unwrap();
 
         if fee_to_lp > 0 {
             **ctx.accounts.sol_vault.to_account_info().try_borrow_mut_lamports()? -= fee_to_lp;
@@ -304,6 +340,11 @@ pub mod bonding_curve {
         if fee_to_house > 0 {
             **ctx.accounts.sol_vault.to_account_info().try_borrow_mut_lamports()? -= fee_to_house;
             **ctx.accounts.house_vault.to_account_info().try_borrow_mut_lamports()? += fee_to_house;
+        }
+
+        if fee_to_referral > 0 {
+            **ctx.accounts.sol_vault.to_account_info().try_borrow_mut_lamports()? -= fee_to_referral;
+            **ctx.accounts.referral_vault.to_account_info().try_borrow_mut_lamports()? += fee_to_referral;
         }
 
         // Update state
@@ -427,6 +468,10 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub house_vault: SystemAccount<'info>,
 
+    /// CHECK: Referral pool vault (SOL)
+    #[account(mut)]
+    pub referral_vault: SystemAccount<'info>,
+
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
@@ -482,6 +527,13 @@ pub struct Trade<'info> {
     )]
     pub house_vault: SystemAccount<'info>,
 
+    /// CHECK: Referral pool vault
+    #[account(
+        mut,
+        address = curve_state.referral_vault,
+    )]
+    pub referral_vault: SystemAccount<'info>,
+
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -510,6 +562,8 @@ pub struct CurveState {
     pub fee_accumulator: Pubkey,
     /// House vault address
     pub house_vault: Pubkey,
+    /// Referral pool vault address
+    pub referral_vault: Pubkey,
     /// Total supply allocated to curve (in token units)
     pub total_supply_on_curve: u64,
     /// Total tokens sold from curve

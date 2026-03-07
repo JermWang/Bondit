@@ -8,7 +8,8 @@ import {
   LaunchMode,
 } from "@bondit/sdk";
 import { log } from "../utils/logger";
-import { readConfig, loadKeypair, createConnection } from "../utils/config";
+import { readConfig, loadKeypair, createConnection, writeConfig } from "../utils/config";
+import { runVanitySearch } from "./vanity";
 import { sendWithRetry } from "../utils/tx";
 import {
   isPhantomConfigured,
@@ -23,12 +24,12 @@ import {
  * Builds, signs, and submits the create_launch transaction to Solana.
  * Uses retry policy with idempotency guard.
  */
-export async function createCommand(options: { skipSimulate?: boolean }): Promise<void> {
+export async function createCommand(options: { skipSimulate?: boolean; noVanity?: boolean; vanitySuffix?: string }): Promise<void> {
   log.heading(`${log.brand()} — Launch Creator`);
   log.divider();
 
   const config = readConfig();
-  const spinner = ora("Preparing launch transaction...").start();
+  let spinner = ora("Preparing launch transaction...").start();
 
   try {
     const connection = createConnection(config.rpcUrl);
@@ -69,10 +70,64 @@ export async function createCommand(options: { skipSimulate?: boolean }): Promis
       return;
     }
 
+    // Always grind for a vanity mint address unless --no-vanity
+    let idempotencyKey = config.idempotencyKey;
+    const suffix = options.vanitySuffix || "LoL";
+
+    if (!options.noVanity) {
+      spinner.text = "Claiming vanity key from backlog...";
+
+      // Try the backlog API first (instant)
+      let claimed = false;
+      const indexerUrl = config.rpcUrl?.includes("mainnet")
+        ? process.env.INDEXER_API_URL
+        : process.env.INDEXER_API_URL || "http://localhost:4000";
+
+      if (indexerUrl) {
+        try {
+          const resp = await fetch(`${indexerUrl}/api/vanity/claim`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ suffix, claimedBy: payerPublicKey.toBase58() }),
+            signal: AbortSignal.timeout(5000),
+          });
+          if (resp.ok) {
+            const data = await resp.json() as { idempotencyKey: string; mintAddress: string };
+            idempotencyKey = data.idempotencyKey;
+            claimed = true;
+            spinner.stop();
+            log.success(`Claimed vanity key from backlog → mint ends with ${suffix}`);
+            log.kv("Mint Address", data.mintAddress);
+          }
+        } catch {
+          // Backlog unavailable — fall through to local grind
+        }
+      }
+
+      // Fall back to local grind if backlog was empty or unavailable
+      if (!claimed) {
+        spinner.stop();
+        log.info(`Backlog unavailable — grinding locally (suffix: ${suffix})`);
+        const vanityResult = await runVanitySearch({
+          suffix,
+          target: "mint",
+        });
+        if (!vanityResult) {
+          log.error("Vanity search failed. Aborting launch.");
+          return;
+        }
+        idempotencyKey = vanityResult.idempotencyKey;
+      }
+
+      config.idempotencyKey = idempotencyKey;
+      writeConfig(config);
+      spinner = ora("Preparing launch transaction...").start();
+    }
+
     // Derive launch ID from idempotency key
     const launchIdBuf = crypto
       .createHash("sha256")
-      .update(config.idempotencyKey || `${config.symbol}_${Date.now()}`)
+      .update(idempotencyKey || `${config.symbol}_${Date.now()}`)
       .digest();
     const launchId = launchIdBuf.slice(0, 32);
 

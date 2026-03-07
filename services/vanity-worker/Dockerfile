@@ -4,10 +4,14 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
+COPY tsconfig.json ./
 RUN npm install
 
-# Copy source code
-COPY index.js .
+# Copy source
+COPY src/ ./src/
+
+# Build
+RUN npm run build
 
 # Start the worker
-CMD ["node", "index.js"]
+CMD ["node", "dist/index.js"]

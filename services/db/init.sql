@@ -160,3 +160,18 @@ CREATE TABLE IF NOT EXISTS emergency_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_emergency_events_launch ON emergency_events(launch_id);
+
+-- Vanity Backlog (pre-ground vanity idempotency keys)
+CREATE TABLE IF NOT EXISTS vanity_backlog (
+    id              BIGSERIAL PRIMARY KEY,
+    idempotency_key TEXT NOT NULL UNIQUE,
+    launch_id_hex   TEXT NOT NULL,
+    mint_address    TEXT NOT NULL,
+    suffix          TEXT NOT NULL DEFAULT 'LoL',
+    claimed_at      TIMESTAMPTZ,
+    claimed_by      TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_vanity_backlog_unclaimed ON vanity_backlog(suffix, id) WHERE claimed_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_vanity_backlog_claimed ON vanity_backlog(claimed_at) WHERE claimed_at IS NOT NULL;

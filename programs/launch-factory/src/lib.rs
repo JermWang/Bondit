@@ -6,14 +6,20 @@ declare_id!("LFac1111111111111111111111111111111111111111");
 
 pub mod constants {
     pub const TOTAL_SUPPLY: u64 = 1_000_000_000;
-    pub const CURVE_SUPPLY: u64 = 800_000_000;
-    pub const AGENCY_TREASURY: u64 = 150_000_000;
-    pub const LP_RESERVE: u64 = 50_000_000;
+    /// Bonding curve: 700M (70%)
+    pub const CURVE_SUPPLY: u64 = 700_000_000;
+    /// LP reserve: 150M (15%) — deep liquidity at graduation
+    pub const LP_RESERVE: u64 = 150_000_000;
+    /// Agency treasury: 100M (10%) — stewardship distribution
+    pub const AGENCY_TREASURY: u64 = 100_000_000;
+    /// Ecosystem fund: 50M (5%) — airdrops, referral bonuses, grants
+    pub const ECOSYSTEM_FUND: u64 = 50_000_000;
     pub const TOKEN_DECIMALS: u8 = 6;
     pub const TOTAL_SUPPLY_UNITS: u64 = TOTAL_SUPPLY * 1_000_000;
     pub const CURVE_SUPPLY_UNITS: u64 = CURVE_SUPPLY * 1_000_000;
-    pub const AGENCY_TREASURY_UNITS: u64 = AGENCY_TREASURY * 1_000_000;
     pub const LP_RESERVE_UNITS: u64 = LP_RESERVE * 1_000_000;
+    pub const AGENCY_TREASURY_UNITS: u64 = AGENCY_TREASURY * 1_000_000;
+    pub const ECOSYSTEM_FUND_UNITS: u64 = ECOSYSTEM_FUND * 1_000_000;
 }
 
 #[program]
@@ -50,6 +56,7 @@ pub mod launch_factory {
         launch.curve_token_vault = ctx.accounts.curve_token_vault.key();
         launch.treasury_vault = ctx.accounts.treasury_vault.key();
         launch.lp_reserve_vault = ctx.accounts.lp_reserve_vault.key();
+        launch.ecosystem_vault = ctx.accounts.ecosystem_vault.key();
 
         // Status
         launch.status = LaunchStatus::CurveActive;
@@ -115,6 +122,20 @@ pub mod launch_factory {
             constants::LP_RESERVE_UNITS,
         )?;
 
+        // Mint ecosystem fund allocation
+        token::mint_to(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    mint: ctx.accounts.mint.to_account_info(),
+                    to: ctx.accounts.ecosystem_vault.to_account_info(),
+                    authority: ctx.accounts.launch_state.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            constants::ECOSYSTEM_FUND_UNITS,
+        )?;
+
         emit!(LaunchCreated {
             launch_id,
             creator: launch.creator,
@@ -125,6 +146,7 @@ pub mod launch_factory {
             curve_supply: constants::CURVE_SUPPLY_UNITS,
             treasury_supply: constants::AGENCY_TREASURY_UNITS,
             lp_reserve_supply: constants::LP_RESERVE_UNITS,
+            ecosystem_supply: constants::ECOSYSTEM_FUND_UNITS,
             timestamp: launch.created_at,
         });
 
@@ -235,6 +257,14 @@ pub struct CreateLaunch<'info> {
     )]
     pub lp_reserve_vault: Account<'info, TokenAccount>,
 
+    #[account(
+        init_if_needed,
+        payer = creator,
+        associated_token::mint = mint,
+        associated_token::authority = vault_state,
+    )]
+    pub ecosystem_vault: Account<'info, TokenAccount>,
+
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
@@ -289,6 +319,7 @@ pub struct LaunchState {
     pub curve_token_vault: Pubkey,
     pub treasury_vault: Pubkey,
     pub lp_reserve_vault: Pubkey,
+    pub ecosystem_vault: Pubkey,
 
     // Status
     pub status: LaunchStatus,
@@ -339,6 +370,7 @@ pub struct LaunchCreated {
     pub curve_supply: u64,
     pub treasury_supply: u64,
     pub lp_reserve_supply: u64,
+    pub ecosystem_supply: u64,
     pub timestamp: i64,
 }
 

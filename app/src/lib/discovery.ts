@@ -96,11 +96,11 @@ export const INTRO_PAGES = [
   },
   {
     title: "How It Works",
-    desc: "80% bonding curve → Graduate at 85 SOL → Agency stewardship with daily LP compounding → Flight mode at 15K holders. Max 180 days.",
+    desc: "70% bonding curve → Graduate at 85 SOL → Agency stewardship with daily LP compounding → Flight mode at 15K holders. Max 180 days.",
   },
   {
     title: "Fully Transparent",
-    desc: "Immutable charters, append-only logs, 99/1 fee split. Every parameter is on-chain and publicly verifiable.",
+    desc: "Immutable charters, append-only logs, 70/20/10 fee split (LP/house/referral). Every parameter is on-chain and publicly verifiable.",
   },
 ] as const;
 

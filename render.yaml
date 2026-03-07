@@ -1,0 +1,63 @@
+## render.yaml — BondIt.lol infrastructure-as-code for Render
+## https://render.com/docs/blueprint-spec
+
+services:
+  # ── Indexer API ─────────────────────────────────────────────────────────
+  - type: web
+    name: bondit-indexer
+    runtime: node
+    buildCommand: cd services/indexer && npm install && npm run build
+    startCommand: cd services/indexer && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bondit-db
+          property: connectionString
+      - key: SOLANA_RPC_URL
+        sync: false
+      - key: PORT
+        value: "4000"
+
+  # ── Vanity Background Worker ────────────────────────────────────────────
+  - type: worker
+    name: bondit-vanity-worker
+    runtime: docker
+    dockerfilePath: services/vanity-worker/Dockerfile
+    dockerContext: services/vanity-worker
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bondit-db
+          property: connectionString
+      - key: VANITY_SUFFIX
+        value: "LoL"
+      - key: VANITY_BACKLOG_TARGET
+        value: "100"
+      - key: VANITY_WORKERS
+        value: "3"
+      - key: VANITY_CHECK_INTERVAL_MS
+        value: "10000"
+      - key: LAUNCH_FACTORY_PROGRAM_ID
+        value: "LFac1111111111111111111111111111111111111111"
+
+  # ── Keeper ──────────────────────────────────────────────────────────────
+  - type: worker
+    name: bondit-keeper
+    runtime: node
+    buildCommand: cd services/keeper && npm install && npm run build
+    startCommand: cd services/keeper && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bondit-db
+          property: connectionString
+      - key: SOLANA_RPC_URL
+        sync: false
+      - key: KEEPER_KEYPAIR_PATH
+        sync: false
+
+databases:
+  - name: bondit-db
+    plan: starter
+    databaseName: bondit
+    postgresMajorVersion: "16"

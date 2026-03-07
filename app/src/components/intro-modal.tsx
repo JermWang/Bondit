@@ -3,12 +3,29 @@
 import { useState, useEffect } from "react";
 
 /* ─── Slide data ─────────────────────────────────────────────────── */
-const SLIDES = [
+type ComparisonRow = { label: string; pump: string; bondit: string; highlight?: boolean };
+type Slide = {
+  id: string;
+  subtitle: string;
+  title: string;
+  body: string;
+  comparison?: ComparisonRow[];
+};
+
+const SLIDES: Slide[] = [
   {
-    id: "vs",
-    subtitle: "BondIt vs pump.fun",
-    title: "We Launch AND Stay",
-    body: "pump.fun deploys your token and disappears. BondIt deploys and then actively stewards: managing LP on Meteora, compounding 99% of fees back into the pool, and releasing the treasury at a fixed daily rate. No dev dumps. No rug pulls. Deterministic from genesis.",
+    id: "infra",
+    subtitle: "Same speed. Way more infrastructure.",
+    title: "PumpFun + Guardrails",
+    body: "Every BondIt launch routes through PumpFun — then wraps it with on-chain rules that protect your token after day one.",
+    comparison: [
+      { label: "LP Depth",          pump: "5%",          bondit: "15% (3×)",    highlight: true },
+      { label: "Fee → back to LP",  pump: "0%",          bondit: "70% compound", highlight: true },
+      { label: "Referral Rewards",  pump: "None",        bondit: "10% of fees",  highlight: true },
+      { label: "Treasury Controls", pump: "Manual",      bondit: "0.20%/day locked" },
+      { label: "On-Chain Charter",  pump: "None",        bondit: "Immutable" },
+      { label: "Auto Flight Mode", pump: "None",        bondit: "15K holders" },
+    ],
   },
   {
     id: "cli",
@@ -26,7 +43,7 @@ const SLIDES = [
     id: "charter",
     subtitle: "Every token. Every time.",
     title: "Immutable On-Chain Charter",
-    body: "At genesis, a charter is written on-chain and locked forever: 80% bonding curve, 15% treasury, 5% LP reserve, 99% of fees redistributed into LP, and a 1% protocol fee. No admin keys. No parameter changes after mint. Verifiable by anyone.",
+    body: "At genesis, a charter is written on-chain and locked forever: 70% bonding curve, 15% LP reserve for deep liquidity, 10% agency treasury, 5% ecosystem fund for airdrops and referral rewards. 2% protocol fee split 70/20/10 between LP compounding, house, and referral pool. No admin keys. No parameter changes after mint.",
   },
   {
     id: "distribution",
@@ -49,139 +66,66 @@ const SLIDES = [
 ];
 
 /* ─── Animated SVG illustrations ────────────────────────────────── */
-function VsSVG() {
+function InfraSVG() {
+  const rows = [
+    { label: "LP Depth",      pump: "5%",     bondit: "15%",  y: 68 },
+    { label: "Fees → LP",     pump: "0%",     bondit: "70%",  y: 98 },
+    { label: "Referrals",     pump: "—",      bondit: "10%",  y: 128 },
+    { label: "Charter",       pump: "—",      bondit: "Locked", y: 158 },
+    { label: "Flight Mode",   pump: "—",      bondit: "Auto",  y: 188 },
+  ];
+
   return (
     <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       <defs>
         <pattern id="igrid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.07)" strokeWidth="0.5"/>
+          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.04)" strokeWidth="0.5"/>
         </pattern>
-        <linearGradient id="redFade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FF3B5C" stopOpacity="0.25"/>
-          <stop offset="100%" stopColor="#FF3B5C" stopOpacity="0"/>
-        </linearGradient>
-        <linearGradient id="greenFade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#A9FF00" stopOpacity="0.2"/>
-          <stop offset="100%" stopColor="#A9FF00" stopOpacity="0"/>
-        </linearGradient>
       </defs>
       <rect width="320" height="240" fill="url(#igrid)"/>
 
-      {/* LEFT — pump.fun chart */}
-      <text x="72" y="24" textAnchor="middle" fontSize="11" fill="#FF3B5C" fontFamily="monospace" opacity="0.85">pump.fun</text>
-
-      {/* Axes */}
-      <line x1="18" y1="40" x2="18" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-      <line x1="18" y1="165" x2="140" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-
-      {/* Pump-and-dump chart area fill */}
-      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163 L140 165 L22 165Z"
-        fill="url(#redFade)" style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
-      {/* Pump-and-dump chart line */}
-      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163"
-        stroke="#FF3B5C" strokeWidth="2" strokeLinecap="round" fill="none"
-        style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
-
-      {/* Peak label */}
-      <g style={{animation:"fadeIn 0.5s ease-out 1s both"}}>
-        <text x="75" y="36" textAnchor="middle" fontSize="7" fill="#FF3B5C" fontFamily="monospace" opacity="0.7">ATH</text>
-        <line x1="75" y1="38" x2="75" y2="42" stroke="#FF3B5C" strokeWidth="0.5" opacity="0.5"/>
+      {/* Column headers */}
+      <g style={{animation:"fadeIn 0.4s ease-out 0.1s both"}}>
+        <rect x="10" y="20" width="145" height="26" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+        <text x="82" y="37" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.35)" fontFamily="monospace" fontWeight="bold">pump.fun</text>
+      </g>
+      <g style={{animation:"fadeIn 0.4s ease-out 0.2s both"}}>
+        <rect x="165" y="20" width="145" height="26" rx="6" fill="rgba(169,255,0,0.06)" stroke="rgba(169,255,0,0.25)" strokeWidth="1.5"/>
+        <text x="237" y="37" textAnchor="middle" fontSize="10" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">BondIt</text>
       </g>
 
-      {/* Crash X markers */}
-      {[[95,115],[110,145],[125,158]].map(([cx,cy],i)=>(
-        <g key={i} style={{animation:`fadeIn 0.3s ease-out ${1.2+i*0.2}s both`}}>
-          <text x={cx} y={cy} textAnchor="middle" fontSize="10" fill="#FF3B5C" opacity="0.6">✕</text>
+      {/* Center divider */}
+      <line x1="160" y1="52" x2="160" y2="210" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="3 3"/>
+
+      {/* Comparison rows */}
+      {rows.map(({ label, pump, bondit, y }, i) => (
+        <g key={label} style={{animation:`rowSlide 0.4s ease-out ${0.3 + i * 0.12}s both`}}>
+          {/* Row background on BondIt side */}
+          <rect x="165" y={y - 11} width="145" height="24" rx="4" fill="rgba(169,255,0,0.03)"/>
+
+          {/* Label (center) */}
+          <text x="160" y={y + 4} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.25)" fontFamily="monospace">{label}</text>
+
+          {/* PumpFun value — dim with ✗ */}
+          <circle cx="48" cy={y} r="6" fill="rgba(255,60,90,0.08)" stroke="rgba(255,60,90,0.25)" strokeWidth="1"/>
+          <path d={`M45 ${y-3} L51 ${y+3} M51 ${y-3} L45 ${y+3}`} stroke="rgba(255,60,90,0.5)" strokeWidth="1.2" strokeLinecap="round"/>
+          <text x="82" y={y + 3.5} textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.25)" fontFamily="monospace">{pump}</text>
+
+          {/* BondIt value — bright with ✓ */}
+          <circle cx="203" cy={y} r="6" fill="rgba(169,255,0,0.12)" stroke="#A9FF00" strokeWidth="1"/>
+          <path d={`M200 ${y} L202 ${y+2.5} L206 ${y-3}`} stroke="#A9FF00" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <text x="250" y={y + 3.5} textAnchor="middle" fontSize="10" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">{bondit}</text>
         </g>
       ))}
 
-      {/* Problem labels */}
-      {[
-        {text:"no LP mgmt",y:178},
-        {text:"dev dumps",y:190},
-        {text:"abandoned",y:202},
-      ].map(({text,y},i)=>(
-        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.5+i*0.15}s both`}}>
-          <text x="12" y={y} fontSize="9" fill="#FF3B5C" fontFamily="monospace" opacity="0.55">✕ {text}</text>
-        </g>
-      ))}
-
-      {/* Flatline */}
-      <line x1="125" y1="163" x2="142" y2="163" stroke="#FF3B5C" strokeWidth="1" strokeDasharray="2 2" opacity="0.4"
-        style={{animation:"fadeIn 0.5s ease-out 1.8s both"}}/>
-
-      {/* DIVIDER */}
-      <line x1="160" y1="16" x2="160" y2="228" stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
-      <text x="160" y="122" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.12)" fontFamily="monospace">VS</text>
-
-      {/* RIGHT — BondIt chart */}
-      <text x="248" y="24" textAnchor="middle" fontSize="11" fill="#A9FF00" fontFamily="monospace" opacity="0.9">bondit.lol</text>
-
-      {/* Axes */}
-      <line x1="178" y1="40" x2="178" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-      <line x1="178" y1="165" x2="305" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-
-      {/* Guardrail zone (shaded band) */}
-      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68 L305 90 C290 97 270 106 250 115 C225 128 200 142 182 150Z"
-        fill="rgba(169,255,0,0.06)" stroke="none"
-        style={{animation:"fadeIn 0.8s ease-out 0.5s both"}}/>
-
-      {/* Upper guardrail */}
-      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68"
-        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
-        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
-      {/* Lower guardrail */}
-      <path d="M182 150 C200 142 225 128 250 115 C270 106 290 97 305 90"
-        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
-        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
-
-      {/* Steady growth chart area fill */}
-      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75 L305 165 L182 165Z"
-        fill="url(#greenFade)" style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
-      {/* Steady growth chart line */}
-      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75"
-        stroke="#A9FF00" strokeWidth="2" strokeLinecap="round" fill="none"
-        style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
-
-      {/* Guardrail label */}
+      {/* Bottom tagline */}
       <g style={{animation:"fadeIn 0.5s ease-out 1.2s both"}}>
-        <text x="308" y="65" fontSize="6.5" fill="rgba(169,255,0,0.45)" fontFamily="monospace">guardrails</text>
-      </g>
-
-      {/* Stewardship event dots on chart */}
-      {[
-        {cx:210,cy:138,label:"LP add"},
-        {cx:245,cy:108,label:"dist"},
-        {cx:280,cy:88,label:"compound"},
-      ].map(({cx,cy,label},i)=>(
-        <g key={label} style={{animation:`fadeIn 0.4s ease-out ${1.4+i*0.25}s both`}}>
-          <circle cx={cx} cy={cy} r="3" fill="#A9FF00" opacity="0.8">
-            <animate attributeName="r" values="3;4;3" dur="2s" begin={`${i*0.5}s`} repeatCount="indefinite"/>
-          </circle>
-          <text x={cx} y={cy-7} textAnchor="middle" fontSize="6" fill="rgba(169,255,0,0.6)" fontFamily="monospace">{label}</text>
-        </g>
-      ))}
-
-      {/* Benefit labels */}
-      {[
-        {text:"managed LP",y:178},
-        {text:"treasury decay",y:190},
-        {text:"fee compounding",y:202},
-      ].map(({text,y},i)=>(
-        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.8+i*0.15}s both`}}>
-          <text x="178" y={y} fontSize="9" fill="#A9FF00" fontFamily="monospace" opacity="0.6">✓ {text}</text>
-        </g>
-      ))}
-
-      {/* Flight mode badge */}
-      <g style={{animation:"fadeIn 0.5s ease-out 2.3s both"}}>
-        <rect x="178" y="210" width="74" height="16" rx="4" fill="rgba(0,255,178,0.1)" stroke="rgba(0,255,178,0.3)" strokeWidth="1"/>
-        <text x="215" y="221" textAnchor="middle" fontSize="7" fill="#00FFB2" fontFamily="monospace">→ flight mode</text>
+        <text x="160" y="228" textAnchor="middle" fontSize="7.5" fill="rgba(255,255,255,0.18)" fontFamily="monospace">same speed · way more infrastructure</text>
       </g>
 
       <style>{`
-        @keyframes chartDraw{from{opacity:0;stroke-dashoffset:400;stroke-dasharray:400}to{opacity:1;stroke-dashoffset:0;stroke-dasharray:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes rowSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
     </svg>
   );
@@ -243,8 +187,8 @@ function CliSVG() {
         {/* Command 3 */}
         <g style={{animation:"typeLine3 0.1s steps(20) 4.8s both"}}>
           <text x="0" y="86" fill="#A9FF00">$</text>
-          <text x="12" y="86" fill="#F1F1F4" className="type-text3">bondit launch create</text>
-          <rect x="132" y="78" width="6" height="10" fill="#A9FF00" className="cursor3">
+          <text x="12" y="86" fill="#F1F1F4" className="type-text3">bondit launch create --vanity</text>
+          <rect x="186" y="78" width="6" height="10" fill="#A9FF00" className="cursor3">
             <animate attributeName="opacity" values="1;0;1" dur="0.8s" repeatCount="indefinite"/>
           </rect>
         </g>
@@ -253,7 +197,7 @@ function CliSVG() {
         <g style={{animation:"slideUpFade 0.4s ease-out 6.0s both"}}>
           <rect x="-5" y="96" width="240" height="36" rx="4" fill="rgba(169,255,0,0.05)" stroke="rgba(169,255,0,0.2)" strokeWidth="1"/>
           <text x="5" y="109" fill="#A9FF00" fontSize="9" fontWeight="bold">SUCCESS: Token is live on curve</text>
-          <text x="5" y="122" fill="#8B8FA3" fontSize="8.5">Mint: 7xK...9qL</text>
+          <text x="5" y="122" fill="#8B8FA3" fontSize="8.5">Mint: 7xK...LoL</text>
           <text x="230" y="122" fill="#00FFB2" fontSize="8.5" textAnchor="end">copy</text>
         </g>
       </g>
@@ -351,12 +295,12 @@ function CharterSVG() {
       <rect x="80" y="25" width="160" height="34" rx="9" fill="rgba(169,255,0,0.14)"/>
       <text x="160" y="46" textAnchor="middle" fontSize="11.5" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">ON-CHAIN CHARTER</text>
       {[
-        {l:"Curve Supply",v:"80%",y:80},
-        {l:"Treasury",v:"15%",y:101},
-        {l:"LP Reserve",v:"5%",y:122},
-        {l:"Fee Redistribution",v:"99% to LP",y:143},
-        {l:"Protocol Fee",v:"1%",y:164},
-        {l:"Max Duration",v:"180 days",y:185},
+        {l:"Curve Supply",v:"70%",y:80},
+        {l:"LP Reserve",v:"15%",y:101},
+        {l:"Treasury",v:"10%",y:122},
+        {l:"Ecosystem Fund",v:"5%",y:143},
+        {l:"Protocol Fee",v:"2%",y:164},
+        {l:"Fee → LP / House / Ref",v:"70/20/10",y:185},
       ].map(({l,v,y},i)=>(
         <g key={l} style={{animation:`rowIn 0.4s ease-out ${0.2+i*0.14}s both`}}>
           <text x="98" y={y} fontSize="10.5" fill="rgba(255,255,255,0.45)" fontFamily="monospace">{l}</text>
@@ -592,7 +536,7 @@ function TransparencySVG() {
 }
 
 function SlideSVG({ id }: { id: string }) {
-  if (id === "vs") return <VsSVG />;
+  if (id === "infra") return <InfraSVG />;
   if (id === "cli") return <CliSVG />;
   if (id === "ai") return <AiSVG />;
   if (id === "charter") return <CharterSVG />;
@@ -608,8 +552,11 @@ export function IntroModal() {
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
-    // Show on every visit
-    setVisible(true);
+    // Only show for first-time visitors
+    const seen = localStorage.getItem("bondit:intro-seen");
+    if (!seen) {
+      setVisible(true);
+    }
 
     function handleReplay() {
       setSlide(0);
@@ -621,6 +568,7 @@ export function IntroModal() {
 
   function dismiss() {
     setVisible(false);
+    localStorage.setItem("bondit:intro-seen", "1");
   }
 
   if (!visible) return null;
@@ -638,14 +586,14 @@ export function IntroModal() {
         {/* Top lime accent line */}
         <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#A9FF00] to-transparent flex-shrink-0" style={{animation:"glowLine 3s ease-in-out infinite"}}/>
 
-        {/* Close button with subtle Skip label */}
+        {/* Close / Skip button — always visible */}
         <button
           onClick={dismiss}
-          className="absolute top-3 right-3 flex items-center gap-1.5 text-[#56566A] hover:text-[#F1F1F4] transition-colors z-10 p-1.5 rounded-lg hover:bg-white/[0.06] group"
+          className="absolute top-3 right-3 flex items-center gap-1.5 text-[#8B8FA3] hover:text-[#F1F1F4] transition-all z-10 px-2.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/[0.15]"
           aria-label="Skip intro"
         >
-          <span className="text-[10px] font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">Skip</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <span className="text-[10px] font-mono uppercase tracking-wider">Skip</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
@@ -660,6 +608,31 @@ export function IntroModal() {
           <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-[#56566A] mb-1.5">{current.subtitle}</div>
           <h2 className="font-display text-[18px] sm:text-[21px] font-bold text-[#F1F1F4] mb-2 sm:mb-3 leading-tight">{current.title}</h2>
           <p className="text-[12px] sm:text-[13px] text-[#8B8FA3] leading-[1.6]">{current.body}</p>
+
+          {/* Comparison table for slide 1 */}
+          {current.comparison && (
+            <div className="mt-3 rounded-xl border border-white/[0.06] overflow-hidden">
+              {/* Header */}
+              <div className="grid grid-cols-[1fr_68px_68px] text-[10px] font-mono uppercase tracking-wider px-3 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+                <span className="text-[#56566A]"></span>
+                <span className="text-center text-[#56566A]">Pump</span>
+                <span className="text-center text-[#A9FF00]">BondIt</span>
+              </div>
+              {/* Rows */}
+              {current.comparison.map((row, i) => (
+                <div
+                  key={row.label}
+                  className={`grid grid-cols-[1fr_68px_68px] px-3 py-[6px] text-[11px] items-center ${
+                    i % 2 === 0 ? "bg-white/[0.01]" : ""
+                  } ${row.highlight ? "border-l-2 border-l-[#A9FF00]/40" : ""}`}
+                >
+                  <span className="text-[#8B8FA3] font-medium">{row.label}</span>
+                  <span className="text-center text-[#56566A] font-mono">{row.pump}</span>
+                  <span className="text-center text-[#A9FF00] font-mono font-semibold">{row.bondit}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Nav row */}
           <div className="flex items-center justify-between mt-5 sm:mt-6 pt-2">

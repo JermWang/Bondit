@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { Connection } from "@solana/web3.js";
 import { logger } from "./logger";
 import { IndexerReadModel } from "./read-model";
+import { getDatabasePool } from "./db/client";
 
 const LAUNCH_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
@@ -68,6 +69,10 @@ export class ApiRouter {
 
     // Dashboard aggregate
     this.router.get("/launches/:launchId/dashboard", this.getDashboard.bind(this));
+
+    // Vanity backlog
+    this.router.post("/vanity/claim", this.claimVanityKey.bind(this));
+    this.router.get("/vanity/stats", this.getVanityStats.bind(this));
   }
 
   private async getLaunches(_req: Request, res: Response): Promise<void> {
@@ -244,6 +249,79 @@ export class ApiRouter {
       this.respondNotFound(res, launchId, "dashboard");
     } catch (err) {
       logger.error({ err }, "API: getDashboard failed");
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  // ── Vanity Backlog ─────────────────────────────────────────────────────
+
+  private async claimVanityKey(req: Request, res: Response): Promise<void> {
+    try {
+      const pool = getDatabasePool();
+      if (!pool) {
+        res.status(503).json({ error: "Database not configured" });
+        return;
+      }
+
+      const suffix = (req.body?.suffix as string) || "LoL";
+      const claimedBy = (req.body?.claimedBy as string) || "unknown";
+
+      // Atomic claim: pick the oldest unclaimed key and mark it claimed in one query
+      const result = await pool.query(
+        `UPDATE vanity_backlog
+         SET claimed_at = NOW(), claimed_by = $2
+         WHERE id = (
+           SELECT id FROM vanity_backlog
+           WHERE suffix = $1 AND claimed_at IS NULL
+           ORDER BY id ASC
+           LIMIT 1
+           FOR UPDATE SKIP LOCKED
+         )
+         RETURNING idempotency_key, launch_id_hex, mint_address, suffix`,
+        [suffix, claimedBy],
+      );
+
+      if (result.rows.length === 0) {
+        res.status(503).json({
+          error: "No vanity keys available",
+          details: "The vanity backlog is empty. Try again shortly or grind locally.",
+        });
+        return;
+      }
+
+      const row = result.rows[0];
+      res.json({
+        idempotencyKey: row.idempotency_key,
+        launchIdHex: row.launch_id_hex,
+        mintAddress: row.mint_address,
+        suffix: row.suffix,
+      });
+    } catch (err) {
+      logger.error({ err }, "API: claimVanityKey failed");
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  private async getVanityStats(_req: Request, res: Response): Promise<void> {
+    try {
+      const pool = getDatabasePool();
+      if (!pool) {
+        res.status(503).json({ error: "Database not configured" });
+        return;
+      }
+
+      const result = await pool.query(
+        `SELECT
+           COUNT(*) FILTER (WHERE claimed_at IS NULL)::int AS available,
+           COUNT(*) FILTER (WHERE claimed_at IS NOT NULL)::int AS claimed,
+           COUNT(*)::int AS total
+         FROM vanity_backlog
+         WHERE suffix = $1`,
+        ["LoL"],
+      );
+      res.json(result.rows[0] ?? { available: 0, claimed: 0, total: 0 });
+    } catch (err) {
+      logger.error({ err }, "API: getVanityStats failed");
       res.status(500).json({ error: "Internal server error" });
     }
   }

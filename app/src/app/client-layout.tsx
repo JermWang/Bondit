@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { AppWalletProvider } from "../components/wallet-provider";
 import { WalletControls } from "../components/wallet-controls";
 import { GlobalSearch } from "../components/global-search";
-import { CopyContractButton } from "../components/copy-contract";
 import { LaunchActionLink, SidebarNav } from "../components/shell-nav";
 import { IntroModal } from "../components/intro-modal";
 
@@ -82,7 +81,6 @@ export function ClientLayout({
           </div>
 
           <div className="flex items-center justify-center gap-1 mb-6">
-            <CopyContractButton />
             <a
               href="https://x.com/bondit_lol"
               target="_blank"

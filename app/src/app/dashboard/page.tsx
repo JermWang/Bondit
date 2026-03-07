@@ -256,7 +256,7 @@ export default async function Dashboard() {
               { l: "Daily Release", v: charter ? formatBpsPercent(charter.charter.dailyReleaseRateBps) : "—" },
               { l: "Max Daily", v: charter?.charter.maxDailyRelease ?? "—" },
               { l: "Max Weekly", v: charter?.charter.maxWeeklyRelease ?? "—" },
-              { l: "Fee Split", v: charter ? `${charter.charter.feeSplitLpBps / 100}% LP / ${charter.charter.feeSplitHouseBps / 100}% House` : "—" },
+              { l: "Fee Split", v: charter ? `${charter.charter.feeSplitLpBps / 100}% LP / ${charter.charter.feeSplitHouseBps / 100}% House / ${charter.charter.feeSplitReferralBps / 100}% Ref` : "—" },
               { l: "Flight Holders", v: charter ? charter.charter.flightHoldersThreshold.toLocaleString() : "—" },
               { l: "Flight Top-10", v: charter ? `≤ ${formatBpsPercent(charter.charter.flightTop10ConcentrationBps)}` : "—" },
               { l: "Flight Treasury", v: charter ? `≤ ${formatBpsPercent(charter.charter.flightTreasuryRemainingBps)}` : "—" },

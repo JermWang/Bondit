@@ -362,7 +362,7 @@ export default function ChatPage() {
                 Charter
               </div>
               <DetailRow label="Daily Release" value={charter ? `${(charter.dailyReleaseRateBps / 100).toFixed(2)}%` : "—"} />
-              <DetailRow label="Fee Split" value={charter ? `${charter.feeSplitLpBps / 100}% LP / ${charter.feeSplitHouseBps / 100}% House` : "—"} />
+              <DetailRow label="Fee Split" value={charter ? `${charter.feeSplitLpBps / 100}% LP / ${charter.feeSplitHouseBps / 100}% House / ${charter.feeSplitReferralBps / 100}% Ref` : "—"} />
               <DetailRow label="Max Duration" value={charter ? `${Math.round(charter.maxStewardshipDuration / 86400)} days` : "—"} />
               <DetailRow label="Daily Cap" value={charter?.maxDailyRelease ?? "—"} />
               <DetailRow label="Weekly Cap" value={charter?.maxWeeklyRelease ?? "—"} />

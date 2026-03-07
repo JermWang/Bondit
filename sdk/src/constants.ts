@@ -13,15 +13,17 @@ export const TOKEN_DECIMALS = 6;
 export const DECIMAL_MULTIPLIER = new BN(10).pow(new BN(TOKEN_DECIMALS));
 
 export const TOTAL_SUPPLY = new BN(1_000_000_000).mul(DECIMAL_MULTIPLIER);
-export const CURVE_SUPPLY = new BN(800_000_000).mul(DECIMAL_MULTIPLIER);
-export const AGENCY_TREASURY = new BN(150_000_000).mul(DECIMAL_MULTIPLIER);
-export const LP_RESERVE = new BN(50_000_000).mul(DECIMAL_MULTIPLIER);
+export const CURVE_SUPPLY = new BN(700_000_000).mul(DECIMAL_MULTIPLIER);
+export const LP_RESERVE = new BN(150_000_000).mul(DECIMAL_MULTIPLIER);
+export const AGENCY_TREASURY = new BN(100_000_000).mul(DECIMAL_MULTIPLIER);
+export const ECOSYSTEM_FUND = new BN(50_000_000).mul(DECIMAL_MULTIPLIER);
 
 // ── Curve Constants ───────────────────────────────────────────────────────
 export const GRADUATION_SOL_TARGET = new BN(85_000_000_000); // 85 SOL in lamports
-export const CURVE_PROTOCOL_FEE_BPS = 100; // 1%
-export const FEE_SPLIT_LP_BPS = 9900; // 99%
-export const FEE_SPLIT_HOUSE_BPS = 100; // 1%
+export const CURVE_PROTOCOL_FEE_BPS = 200; // 2%
+export const FEE_SPLIT_LP_BPS = 7000; // 70%
+export const FEE_SPLIT_HOUSE_BPS = 2000; // 20%
+export const FEE_SPLIT_REFERRAL_BPS = 1000; // 10%
 export const VIRTUAL_SOL_RESERVES = new BN(30_000_000_000); // 30 SOL virtual
 export const VIRTUAL_TOKEN_RESERVES = CURVE_SUPPLY;
 
