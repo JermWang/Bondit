@@ -26,7 +26,7 @@ function getDatabaseSslConfig() {
   };
 }
 
-async function getPool() {
+export async function getPool() {
   if (pool) return pool;
 
   const databaseUrl = process.env.DATABASE_URL;

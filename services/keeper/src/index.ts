@@ -6,8 +6,9 @@ import { MonitorJob } from "./jobs/monitor";
 import { ExecuteJob } from "./jobs/execute";
 import { CompoundJob } from "./jobs/compound";
 import { FlightCheckJob } from "./jobs/flight-check";
+import { ReferralPayoutJob } from "./jobs/referral-payout";
 import { logger } from "./logger";
-import { closePool } from "./db";
+import { closePool, getPool } from "./db";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ async function main() {
   const executeJob = new ExecuteJob(connection, keeper);
   const compoundJob = new CompoundJob(connection, keeper);
   const flightCheckJob = new FlightCheckJob(connection, keeper);
+  const referralPayoutJob = new ReferralPayoutJob(connection, keeper, getPool);
 
   // Hourly monitor crank: every hour at :00
   const monitorCron = new CronJob("0 * * * *", async () => {
@@ -62,14 +64,26 @@ async function main() {
     }
   });
 
+  // Referral payouts: every 30 minutes
+  const referralCron = new CronJob("*/30 * * * *", async () => {
+    try {
+      logger.info("Running referral payout cycle...");
+      await referralPayoutJob.run();
+    } catch (err) {
+      logger.error({ err }, "Referral payout failed");
+    }
+  });
+
   monitorCron.start();
   executeCron.start();
   flightCron.start();
+  referralCron.start();
 
   logger.info("Keeper cron jobs started:");
   logger.info("  - Monitor: hourly at :00");
   logger.info("  - Execute + Compound: daily at 00:00 UTC");
   logger.info("  - Flight check: every 6 hours");
+  logger.info("  - Referral payouts: every 30 minutes");
 
   // Graceful shutdown
   process.on("SIGINT", async () => {
@@ -77,6 +91,7 @@ async function main() {
     monitorCron.stop();
     executeCron.stop();
     flightCron.stop();
+    referralCron.stop();
     await closePool();
     process.exit(0);
   });
