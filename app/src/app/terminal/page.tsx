@@ -34,7 +34,7 @@ export default function TerminalPage() {
             { label: "Writes", value: "Keeper / protocol only" },
             { label: "Auditability", value: "Append-only action traces" },
           ],
-          footer: "This route will mature into a real command center once keeper + indexer grounding is complete.",
+          footer: "Discovery, dashboard, launch, and advisory flows are now grounded in live services. This route remains focused on future operator-grade inspection and control tooling.",
         },
         {
           title: "Upcoming Panels",

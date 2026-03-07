@@ -7,7 +7,7 @@ import {
   getLaunchLiquidity,
   getLaunches,
 } from "@/lib/api";
-import { TOKENS, TRENDING, type DiscoveryToken, type TrendingToken } from "@/lib/discovery";
+import { type DiscoveryToken, type TrendingToken } from "@/lib/discovery";
 import type {
   LaunchCharterResponse,
   LaunchDashboardResponse,
@@ -19,15 +19,15 @@ import type {
 } from "@bondit/sdk/api";
 
 export interface DiscoveryFeedResult {
-  source: "live" | "fixture";
+  source: "live" | "empty";
   tokens: DiscoveryToken[];
   trending: TrendingToken[];
   error: string | null;
 }
 
 export interface TokenDetailResult {
-  source: "live" | "fixture";
-  launchId: string | null;
+  source: "live";
+  launchId: string;
   token: DiscoveryToken;
   dashboard: LaunchDashboardResponse | null;
   charter: LaunchCharterResponse | null;
@@ -72,12 +72,12 @@ function mapLaunchToDiscoveryToken(launch: LaunchListItem, index: number): Disco
     mcap: launch.marketCapUsd ?? "$—",
     vol: launch.volume24hUsd ?? "$—",
     holders: launch.holdersCount ?? 0,
-    grad: launch.status === "CurveActive" ? 0 : 100,
-    distPct: 0,
+    grad: launch.badge === "graduating" ? 75 : launch.status === "CurveActive" ? 0 : 100,
+    distPct: launch.badge === "flight" ? 100 : 0,
     up: change.up,
     change: change.label,
     replies: launch.repliesCount ?? 0,
-    age: "live",
+    age: formatAge(launch.createdAt),
     creator: shortenAddress(launch.creator),
     badgeType: launch.badge ?? null,
   };
@@ -97,23 +97,13 @@ function mapLaunchToTrendingToken(launch: LaunchListItem, index: number): Trendi
   };
 }
 
-function findFixtureTokenByTicker(ticker: string): DiscoveryToken | undefined {
-  return TOKENS.find((token) => token.ticker.toLowerCase() === ticker.toLowerCase());
-}
-
-function buildFixtureTokenDetail(token: DiscoveryToken, notice: string | null): TokenDetailResult {
-  return {
-    source: "fixture",
-    launchId: null,
-    token,
-    dashboard: null,
-    charter: null,
-    liquidity: null,
-    flight: null,
-    fees: null,
-    report: null,
-    notice,
-  };
+function formatAge(createdAt?: number | null): string {
+  if (!createdAt || !Number.isFinite(createdAt)) return "live";
+  const elapsedMinutes = Math.max(1, Math.floor((Date.now() - createdAt) / 60_000));
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h`;
+  return `${Math.floor(elapsedHours / 24)}d`;
 }
 
 export async function loadDiscoveryFeed(): Promise<DiscoveryFeedResult> {
@@ -122,10 +112,10 @@ export async function loadDiscoveryFeed(): Promise<DiscoveryFeedResult> {
 
     if (!response.launches.length) {
       return {
-        source: "fixture",
-        tokens: TOKENS,
-        trending: TRENDING,
-        error: "Indexer returned no launches yet. Using BondIt fixture feed.",
+        source: "empty",
+        tokens: [],
+        trending: [],
+        error: "No indexed launches are available yet.",
       };
     }
 
@@ -139,29 +129,23 @@ export async function loadDiscoveryFeed(): Promise<DiscoveryFeedResult> {
       error: null,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load indexed launches.";
-
     return {
-      source: "fixture",
-      tokens: TOKENS,
-      trending: TRENDING,
-      error: `${getLoadFailureMessage(error, "Live discovery feed unavailable right now")}. Falling back to fixture discovery data.`,
+      source: "empty",
+      tokens: [],
+      trending: [],
+      error: getLoadFailureMessage(error, "Live discovery feed unavailable right now"),
     };
   }
 }
 
 export async function loadTokenDetail(ticker: string): Promise<TokenDetailResult | null> {
-  const fixtureToken = findFixtureTokenByTicker(ticker);
-
   try {
     const launches = await getLaunches();
     const launchIndex = launches.launches.findIndex((launch) => launch.symbol.toLowerCase() === ticker.toLowerCase());
     const launch = launchIndex >= 0 ? launches.launches[launchIndex] : null;
 
     if (!launch) {
-      return fixtureToken
-        ? buildFixtureTokenDetail(fixtureToken, "Live launch not found. Using BondIt fixture detail view.")
-        : null;
+      return null;
     }
 
     const [dashboard, charter, liquidity, flight, fees, report] = await Promise.allSettled([
@@ -185,16 +169,9 @@ export async function loadTokenDetail(ticker: string): Promise<TokenDetailResult
       flight: flight.status === "fulfilled" ? flight.value : null,
       fees: fees.status === "fulfilled" ? fees.value : null,
       report: report.status === "fulfilled" ? report.value : null,
-      notice: detailFailures > 0 ? "Some live detail panels are still loading from the indexed services." : null,
+      notice: detailFailures > 0 ? "Some indexed detail panels are temporarily unavailable." : null,
     };
   } catch (error) {
-    if (!fixtureToken) return null;
-
-    const message = getLoadFailureMessage(error, "Live token detail unavailable right now");
-
-    return buildFixtureTokenDetail(
-      fixtureToken,
-      `${message}. Using BondIt fixture detail view.`,
-    );
+    throw new Error(getLoadFailureMessage(error, "Live token detail unavailable right now"));
   }
 }

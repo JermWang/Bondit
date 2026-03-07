@@ -1,7 +1,7 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { logger } from "../logger";
-import { getActiveStewardingLaunches, rowToPublicKeys, recordPolicyAction } from "../db";
+import { getActiveStewardingLaunches, getLatestStewardshipMetrics, rowToPublicKeys, recordPolicyAction } from "../db";
 
 /**
  * Flight Mode Check Job
@@ -42,13 +42,7 @@ export class FlightCheckJob {
     // 1. Get current metrics from PolicyState
     const holdersCount = launch.holdersCount;
     const top10Bps = launch.top10ConcentrationBps;
-    
-    // 2. Get treasury balance
-    const treasuryBalance = await this.getTreasuryBalance(launch.treasuryVault);
-    const treasuryBps = treasuryBalance
-      .mul(new BN(10_000))
-      .div(this.TOTAL_SUPPLY_UNITS)
-      .toNumber();
+    const treasuryBps = Math.round(launch.treasuryRemainingPct * 100);
 
     // 3. Check elapsed days
     const now = Math.floor(Date.now() / 1000);
@@ -94,32 +88,33 @@ export class FlightCheckJob {
     }
   }
 
-  private async getTreasuryBalance(vault: PublicKey): Promise<BN> {
-    try {
-      const account = await this.connection.getTokenAccountBalance(vault);
-      return new BN(account.value.amount);
-    } catch {
-      return new BN(0);
-    }
-  }
-
   private async getActiveLaunches(): Promise<ActiveLaunch[]> {
     const rows = await getActiveStewardingLaunches();
-    return rows
-      .filter((r) => r.vault_state && r.policy_state && r.graduated_at)
-      .map((r) => {
-        const keys = rowToPublicKeys(r);
-        return {
-          launchId: r.launch_id,
-          mint: keys.mint,
-          policyState: keys.policyState!,
-          vaultState: keys.vaultState!,
-          treasuryVault: keys.vaultState!, // TODO: resolve actual treasury ATA
-          holdersCount: 0, // TODO: fetch latest snapshot from DB
-          top10ConcentrationBps: 10000, // TODO: fetch latest snapshot from DB
-          graduationTimestamp: keys.graduatedAt ? Math.floor(keys.graduatedAt.getTime() / 1000) : 0,
-        };
-      });
+    const launches = await Promise.all(
+      rows
+        .filter((r) => r.vault_state && r.policy_state && r.graduated_at)
+        .map(async (r) => {
+          const keys = rowToPublicKeys(r);
+          const metrics = await getLatestStewardshipMetrics(r.launch_id);
+          if (!metrics) {
+            logger.warn({ launchId: r.launch_id }, "FlightCheckJob: missing stewardship metrics snapshot");
+            return null;
+          }
+
+          return {
+            launchId: r.launch_id,
+            mint: keys.mint,
+            policyState: keys.policyState!,
+            vaultState: keys.vaultState!,
+            holdersCount: metrics.holders_count,
+            top10ConcentrationBps: metrics.top10_concentration_bps,
+            treasuryRemainingPct: metrics.treasury_remaining_pct,
+            graduationTimestamp: keys.graduatedAt ? Math.floor(keys.graduatedAt.getTime() / 1000) : 0,
+          };
+        }),
+    );
+
+    return launches.flatMap((launch) => (launch ? [launch] : []));
   }
 }
 
@@ -128,8 +123,8 @@ interface ActiveLaunch {
   mint: PublicKey;
   policyState: PublicKey;
   vaultState: PublicKey;
-  treasuryVault: PublicKey;
   holdersCount: number;
   top10ConcentrationBps: number;
+  treasuryRemainingPct: number;
   graduationTimestamp: number;
 }

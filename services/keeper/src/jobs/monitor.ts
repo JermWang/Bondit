@@ -41,19 +41,19 @@ export class MonitorJob {
     const top10Bps = await this.computeTop10Concentration(launch.mint);
     
     // 3. Estimate LP depth
-    const lpDepthUsd = await this.estimateLpDepth(launch.poolAddress);
+    const lpDepthUsd = await this.estimateLpDepth();
     
     // 4. Compute volatility (from recent swaps)
-    const volatility1hBps = await this.computeVolatility1h(launch.mint);
-    const volume24hUsd = await this.computeVolume24h(launch.mint);
+    const volatility1hBps = await this.computeVolatility1h();
+    const volume24hUsd = await this.computeVolume24h();
 
     logger.info({
       launchId: launch.launchId,
       holdersCount,
       top10Bps,
-      lpDepthUsd,
-      volatility1hBps,
-      volume24hUsd,
+      lpDepthUsd: lpDepthUsd ?? "unavailable",
+      volatility1hBps: volatility1hBps ?? "unavailable",
+      volume24hUsd: volume24hUsd ?? "unavailable",
     }, "MonitorJob: metrics computed");
 
     // 5. Record snapshot to DB
@@ -69,7 +69,7 @@ export class MonitorJob {
   private async getActiveLaunches(): Promise<ActiveLaunch[]> {
     const rows = await getActiveStewardingLaunches();
     return rows
-      .filter((r) => r.policy_state && r.vault_state && r.adapter_state)
+      .filter((r) => r.policy_state && r.vault_state)
       .map((r) => {
         const keys = rowToPublicKeys(r);
         return {
@@ -77,8 +77,6 @@ export class MonitorJob {
           mint: keys.mint,
           policyState: keys.policyState!,
           vaultState: keys.vaultState!,
-          adapterState: keys.adapterState!,
-          poolAddress: keys.adapterState!, // TODO: resolve from adapter state on-chain
         };
       });
   }
@@ -112,20 +110,19 @@ export class MonitorJob {
     }
   }
 
-  private async estimateLpDepth(_poolAddress: PublicKey): Promise<number> {
+  private async estimateLpDepth(): Promise<number | null> {
     // TODO: Read Meteora DLMM pool state to estimate active liquidity
-    // For now return 0
-    return 0;
+    return null;
   }
 
-  private async computeVolatility1h(_mint: PublicKey): Promise<number> {
+  private async computeVolatility1h(): Promise<number | null> {
     // TODO: Compute from recent swap events in indexer
-    return 0;
+    return null;
   }
 
-  private async computeVolume24h(_mint: PublicKey): Promise<number> {
+  private async computeVolume24h(): Promise<number | null> {
     // TODO: Aggregate from indexer
-    return 0;
+    return null;
   }
 }
 
@@ -134,6 +131,4 @@ interface ActiveLaunch {
   mint: PublicKey;
   policyState: PublicKey;
   vaultState: PublicKey;
-  adapterState: PublicKey;
-  poolAddress: PublicKey;
 }

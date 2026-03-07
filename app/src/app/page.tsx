@@ -4,12 +4,12 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadDiscoveryFeed } from "@/lib/discovery-service";
 import {
-  TRENDING,
-  TOKENS,
   TABS,
   filterDiscoveryTokens,
   getAvatarStyle,
+  type DiscoveryToken,
   type DiscoveryTab,
+  type TrendingToken,
 } from "@/lib/discovery";
 
 /* ─── Helpers ───────────────────────────────────────────────────── */
@@ -30,9 +30,9 @@ function getBadge(type: string | null) {
 function HomeContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<DiscoveryTab>("Trending");
-  const [tokens, setTokens] = useState(TOKENS);
-  const [trendingTokens, setTrendingTokens] = useState(TRENDING);
-  const [feedSource, setFeedSource] = useState<"live" | "fixture">("fixture");
+  const [tokens, setTokens] = useState<DiscoveryToken[]>([]);
+  const [trendingTokens, setTrendingTokens] = useState<TrendingToken[]>([]);
+  const [feedSource, setFeedSource] = useState<"live" | "empty">("empty");
   const [feedNotice, setFeedNotice] = useState<string | null>(null);
   const [isFeedLoading, setIsFeedLoading] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -86,7 +86,7 @@ function HomeContent() {
           <span className="w-2 h-2 rounded-full bg-[#00FFB2] shadow-[0_0_8px_rgba(0,255,178,0.5)] animate-pulse-dot" />
           <span className="text-[12px] font-semibold text-[#8B8FA3] uppercase tracking-widest">Trending Now</span>
           <span className={`badge ${isFeedLoading ? "badge-blue" : feedSource === "live" ? "badge-green" : "badge-yellow"}`}>
-            {isFeedLoading ? "Syncing" : feedSource === "live" ? "Live" : "Fixture"}
+            {isFeedLoading ? "Syncing" : feedSource === "live" ? "Live" : "Waiting on Indexer"}
           </span>
         </div>
         <div

@@ -1,5 +1,81 @@
 import { logger } from "./logger";
 import crypto from "crypto";
+import type {
+  LaunchDashboardResponse,
+  LaunchFeeBreakdownResponse,
+  LaunchFlightStatusResponse,
+  LaunchLiquidityStatsResponse,
+  LaunchListItem,
+  LaunchTreasuryResponse,
+  PolicyActionLog,
+} from "@bondit/sdk/api";
+
+const INDEXER_API_BASE = process.env.INDEXER_API_URL ?? process.env.NEXT_PUBLIC_INDEXER_API_URL ?? "http://localhost:3001/api";
+
+type ReportData = {
+  status: string;
+  dayNumber: number;
+  holdersCount: number;
+  priceChange24h: string;
+  volume24h: string;
+  treasuryRemaining: string;
+  treasuryRemainingPct: number;
+  releasedToday: string;
+  nextReleaseEstimate: string;
+  lpDepthUsd: string;
+  feesHarvested: string;
+  compounded: string;
+  houseShare: string;
+  top10Concentration: string;
+  holdersGrowth: string;
+  newHolders24h: number;
+  flightEligible: boolean;
+  holdersProgress: number;
+  concentrationProgress: number;
+  treasuryProgress: number;
+  daysRemaining: number;
+  recentActions: PolicyActionLog[];
+  anomalies: Array<Record<string, unknown>>;
+};
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    let details = `Request failed with status ${response.status}`;
+    try {
+      const payload = (await response.json()) as { error?: string; details?: string };
+      details = payload.details ? `${payload.error ?? details}: ${payload.details}` : payload.error ?? details;
+    } catch {}
+    throw new Error(details);
+  }
+
+  return (await response.json()) as T;
+}
+
+function formatSignedPercent(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unavailable";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function formatBpsPercent(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unavailable";
+  return `${(value / 100).toFixed(2)}%`;
+}
+
+function computeForwardProgress(current: number, target: number): number {
+  if (!Number.isFinite(target) || target <= 0) return 0;
+  return Math.max(0, Math.min(100, Number(((current / target) * 100).toFixed(2))));
+}
+
+function computeInverseProgress(current: number, target: number): number {
+  if (!Number.isFinite(current) || current <= 0) return 100;
+  if (!Number.isFinite(target) || target <= 0) return 0;
+  if (current <= target) return 100;
+  return Math.max(0, Math.min(100, Number(((target / current) * 100).toFixed(2))));
+}
 
 /**
  * ReportGenerator — generates daily/weekly transparency reports.
@@ -64,7 +140,7 @@ export class ReportGenerator {
 
       policyActions: data.recentActions,
 
-      anomalies: [],
+      anomalies: data.anomalies,
     };
 
     logger.info({
@@ -91,31 +167,78 @@ export class ReportGenerator {
     return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
   }
 
-  private async fetchLaunchData(_launchId: string): Promise<any> {
-    // TODO: Fetch from indexer API endpoints
+  private async fetchLaunchData(launchId: string): Promise<ReportData> {
+    const dashboard = await fetchJson<LaunchDashboardResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/dashboard`);
+
+    const [launchResult, treasuryResult, liquidityResult, flightResult, feesResult] = await Promise.allSettled([
+      fetchJson<LaunchListItem>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}`),
+      fetchJson<LaunchTreasuryResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/treasury`),
+      fetchJson<LaunchLiquidityStatsResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/liquidity`),
+      fetchJson<LaunchFlightStatusResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/flight-status`),
+      fetchJson<LaunchFeeBreakdownResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/fees`),
+    ]);
+
+    const launch = launchResult.status === "fulfilled" ? launchResult.value : null;
+    const treasury = treasuryResult.status === "fulfilled" ? treasuryResult.value : null;
+    const liquidity = liquidityResult.status === "fulfilled" ? liquidityResult.value : null;
+    const flight = flightResult.status === "fulfilled" ? flightResult.value : null;
+    const fees = feesResult.status === "fulfilled" ? feesResult.value : null;
+
+    const anomalies: Array<Record<string, unknown>> = [];
+
+    if (!launch) anomalies.push({ type: "missing_metric", metric: "launch_overview" });
+    if (!treasury) anomalies.push({ type: "missing_metric", metric: "treasury" });
+    if (!liquidity) anomalies.push({ type: "missing_metric", metric: "liquidity" });
+    if (!flight) anomalies.push({ type: "missing_metric", metric: "flight_status" });
+    if (!fees) anomalies.push({ type: "missing_metric", metric: "fees" });
+
+    const nextReleaseEstimate = treasury?.releaseSchedule[0]
+      ? `${treasury.releaseSchedule[0].amount} to ${treasury.releaseSchedule[0].destination}`
+      : "No indexed release schedule";
+
+    const holdersProgress = flight
+      ? computeForwardProgress(flight.conditions.holdersCount, flight.conditions.holdersTarget)
+      : 0;
+    const concentrationProgress = flight
+      ? computeInverseProgress(flight.conditions.top10ConcentrationBps, flight.conditions.top10Target)
+      : 0;
+    const treasuryProgress = flight
+      ? computeInverseProgress(flight.conditions.treasuryRemainingBps, flight.conditions.treasuryTarget)
+      : 0;
+    const daysRemaining = flight
+      ? Math.max(0, flight.conditions.maxDays - flight.conditions.daysSinceGraduation)
+      : 0;
+
+    if (!launch) {
+      anomalies.push({ type: "missing_metric", metric: "new_holders_24h" });
+    } else {
+      anomalies.push({ type: "missing_metric", metric: "holders_growth_24h", message: "Historical holder delta is not yet indexed." });
+    }
+
     return {
-      status: "Stewarding",
-      dayNumber: 0,
-      holdersCount: 0,
-      priceChange24h: "0%",
-      volume24h: "$0",
-      treasuryRemaining: "150,000,000",
-      treasuryRemainingPct: 100,
-      releasedToday: "0",
-      nextReleaseEstimate: "300,000 tokens",
-      lpDepthUsd: "$0",
-      feesHarvested: "$0",
-      compounded: "$0",
-      houseShare: "$0",
-      top10Concentration: "100%",
-      holdersGrowth: "0%",
+      status: dashboard.status,
+      dayNumber: dashboard.stewardship.dayNumber,
+      holdersCount: dashboard.stewardship.holdersCount,
+      priceChange24h: formatSignedPercent(launch?.priceChange24hPct ?? null),
+      volume24h: launch?.volume24hUsd ?? "unavailable",
+      treasuryRemaining: treasury?.remaining ?? dashboard.stewardship.treasuryRemaining,
+      treasuryRemainingPct: treasury?.remainingPct ?? dashboard.stewardship.treasuryRemainingPct,
+      releasedToday: treasury?.releasedToday ?? "unavailable",
+      nextReleaseEstimate,
+      lpDepthUsd: liquidity?.lpDepthUsd ?? dashboard.stewardship.lpDepthUsd,
+      feesHarvested: liquidity?.totalFeesHarvested ?? fees?.totalFeesCollected ?? "unavailable",
+      compounded: liquidity?.totalCompounded ?? fees?.lpFeesCompounded ?? "unavailable",
+      houseShare: fees?.houseFeesCollected ?? "unavailable",
+      top10Concentration: formatBpsPercent(dashboard.stewardship.top10ConcentrationBps),
+      holdersGrowth: "unavailable",
       newHolders24h: 0,
-      flightEligible: false,
-      holdersProgress: 0,
-      concentrationProgress: 0,
-      treasuryProgress: 0,
-      daysRemaining: 180,
-      recentActions: [],
+      flightEligible: flight?.eligible ?? false,
+      holdersProgress,
+      concentrationProgress,
+      treasuryProgress,
+      daysRemaining,
+      recentActions: dashboard.recentActions,
+      anomalies,
     };
   }
 }

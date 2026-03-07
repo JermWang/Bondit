@@ -87,6 +87,62 @@ export async function getActiveStewardingLaunches(): Promise<ActiveLaunchRow[]> 
   }
 }
 
+export interface LatestStewardshipMetricsRow {
+  holders_count: number;
+  top10_concentration_bps: number;
+  treasury_remaining_pct: number;
+}
+
+export async function getLatestStewardshipMetrics(
+  launchId: string,
+): Promise<LatestStewardshipMetricsRow | null> {
+  const db = await getPool();
+  if (!db) return null;
+
+  try {
+    const result = await db.query(
+      `SELECT hs.holders_count, hs.top10_concentration_bps, ts.remaining_pct AS treasury_remaining_pct
+       FROM launches l
+       LEFT JOIN LATERAL (
+         SELECT holders_count, top10_concentration_bps
+         FROM holder_snapshots
+         WHERE launch_id = l.launch_id
+         ORDER BY snapshot_at DESC
+         LIMIT 1
+       ) hs ON TRUE
+       LEFT JOIN LATERAL (
+         SELECT remaining_pct
+         FROM treasury_snapshots
+         WHERE launch_id = l.launch_id
+         ORDER BY snapshot_at DESC
+         LIMIT 1
+       ) ts ON TRUE
+       WHERE l.launch_id = $1
+       LIMIT 1`,
+      [launchId],
+    );
+
+    const row = result.rows[0] as Partial<LatestStewardshipMetricsRow> | undefined;
+    if (!row) return null;
+    if (
+      typeof row.holders_count !== "number" ||
+      typeof row.top10_concentration_bps !== "number" ||
+      typeof row.treasury_remaining_pct !== "number"
+    ) {
+      return null;
+    }
+
+    return {
+      holders_count: row.holders_count,
+      top10_concentration_bps: row.top10_concentration_bps,
+      treasury_remaining_pct: row.treasury_remaining_pct,
+    };
+  } catch (err) {
+    logger.error({ err, launchId }, "Failed to query latest stewardship metrics");
+    return null;
+  }
+}
+
 // ── Query: Launches with Full Vault Info (for execute/compound) ─────────────
 
 export interface LaunchWithVaults extends ActiveLaunchRow {

@@ -40,7 +40,7 @@ export function resolveProvider(overrides?: {
     return new OpenAIProvider(openaiKey);
   }
 
-  logger.warn("No AI provider configured — using canned responses only");
+  logger.warn("No AI provider configured — using grounded indexer fallback responses only");
   return null;
 }
 

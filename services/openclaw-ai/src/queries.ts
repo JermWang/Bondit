@@ -1,6 +1,14 @@
 import { logger } from "./logger";
 import { AIProvider, ChatMessage } from "./providers";
 import crypto from "crypto";
+import type {
+  LaunchCharterResponse,
+  LaunchDashboardResponse,
+  LaunchFeeBreakdownResponse,
+  LaunchFlightStatusResponse,
+  LaunchLiquidityStatsResponse,
+  LaunchTreasuryResponse,
+} from "@bondit/sdk/api";
 
 const SYSTEM_PROMPT = `You are BondIt's advisory AI for a Solana token launch platform.
 You answer community questions about launch status, charter parameters, treasury mechanics, flight mode, fees, and the Agency stewardship system.
@@ -10,7 +18,47 @@ Rules:
 - NEVER provide financial advice or price predictions.
 - NEVER claim you can execute trades or modify protocol parameters.
 - Always remind users that your responses are advisory only.
-- Reference specific charter parameters and on-chain mechanics when relevant.`;
+- Reference specific charter parameters and on-chain mechanics when relevant.
+- If live context is missing, say exactly which indexed metrics are unavailable.
+- Do not invent values that are not present in the provided launch context.`;
+
+const INDEXER_API_BASE = process.env.INDEXER_API_URL ?? process.env.NEXT_PUBLIC_INDEXER_API_URL ?? "http://localhost:3001/api";
+
+type QueryContext = {
+  dashboard: LaunchDashboardResponse;
+  charter: LaunchCharterResponse | null;
+  treasury: LaunchTreasuryResponse | null;
+  liquidity: LaunchLiquidityStatsResponse | null;
+  flight: LaunchFlightStatusResponse | null;
+  fees: LaunchFeeBreakdownResponse | null;
+};
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    let details = `Request failed with status ${response.status}`;
+    try {
+      const payload = (await response.json()) as { error?: string; details?: string };
+      details = payload.details ? `${payload.error ?? details}: ${payload.details}` : payload.error ?? details;
+    } catch {}
+    throw new Error(details);
+  }
+
+  return (await response.json()) as T;
+}
+
+function formatBpsPercent(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unavailable";
+  return `${(value / 100).toFixed(2)}%`;
+}
+
+function formatDays(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "unavailable";
+  return `${value} days`;
+}
 
 /**
  * QueryHandler — answers community questions about a launch.
@@ -31,6 +79,7 @@ export class QueryHandler {
   async handleQuery(launchId: string, question: string): Promise<QueryResponse> {
     const queryType = this.classifyQuery(question);
     logger.info({ launchId, queryType, questionLength: question.length }, "QueryHandler: processing");
+    const context = await this.loadContext(launchId);
 
     const promptHash = crypto.createHash("sha256")
       .update(`query_${launchId}_${question}_${Date.now()}`)
@@ -42,18 +91,18 @@ export class QueryHandler {
 
     if (this.provider) {
       try {
-        const result = await this.provider.complete(this.buildMessages(launchId, question, queryType));
+        const result = await this.provider.complete(this.buildMessages(launchId, question, queryType, context));
         answer = result.text;
         modelId = result.model;
         logger.info({ launchId, model: modelId, tokens: result.inputTokens + result.outputTokens }, "QueryHandler: LLM response");
       } catch (err) {
-        logger.error({ err }, "QueryHandler: LLM call failed, using canned response");
-        answer = this.getCannedAnswer(queryType, question, launchId);
-        modelId = "bondit-canned-v1";
+        logger.error({ err, launchId }, "QueryHandler: LLM call failed, using grounded fallback");
+        answer = this.buildGroundedFallbackAnswer(context, queryType, question);
+        modelId = "bondit-grounded-fallback-v1";
       }
     } else {
-      answer = this.getCannedAnswer(queryType, question, launchId);
-      modelId = "bondit-canned-v1";
+      answer = this.buildGroundedFallbackAnswer(context, queryType, question);
+      modelId = "bondit-grounded-fallback-v1";
     }
 
     return {
@@ -68,30 +117,42 @@ export class QueryHandler {
     };
   }
 
-  private buildMessages(launchId: string, question: string, queryType: string): ChatMessage[] {
-    return [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: `Launch ID: ${launchId}\nCategory: ${queryType}\nQuestion: ${question}` },
-    ];
+  private async loadContext(launchId: string): Promise<QueryContext> {
+    const dashboard = await fetchJson<LaunchDashboardResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/dashboard`);
+
+    const [charter, treasury, liquidity, flight, fees] = await Promise.allSettled([
+      fetchJson<LaunchCharterResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/charter`),
+      fetchJson<LaunchTreasuryResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/treasury`),
+      fetchJson<LaunchLiquidityStatsResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/liquidity`),
+      fetchJson<LaunchFlightStatusResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/flight-status`),
+      fetchJson<LaunchFeeBreakdownResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/fees`),
+    ]);
+
+    return {
+      dashboard,
+      charter: charter.status === "fulfilled" ? charter.value : null,
+      treasury: treasury.status === "fulfilled" ? treasury.value : null,
+      liquidity: liquidity.status === "fulfilled" ? liquidity.value : null,
+      flight: flight.status === "fulfilled" ? flight.value : null,
+      fees: fees.status === "fulfilled" ? fees.value : null,
+    };
   }
 
-  private getCannedAnswer(queryType: string, question: string, launchId: string): string {
-    switch (queryType) {
-      case "status":
-        return this.cannedStatusAnswer(launchId);
-      case "charter":
-        return this.cannedCharterAnswer(launchId);
-      case "treasury":
-        return this.cannedTreasuryAnswer(launchId);
-      case "flight_mode":
-        return this.cannedFlightModeAnswer(launchId);
-      case "fees":
-        return this.cannedFeesAnswer(launchId);
-      case "mechanics":
-        return this.cannedMechanicsAnswer(question);
-      default:
-        return "I can help with questions about this launch's status, charter parameters, treasury, flight mode progress, fees, and how the Agency system works. What would you like to know?";
-    }
+  private buildMessages(launchId: string, question: string, queryType: string, context: QueryContext): ChatMessage[] {
+    return [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `Launch ID: ${launchId}\nCategory: ${queryType}\nQuestion: ${question}\n\nLive launch context:\n${JSON.stringify({
+          dashboard: context.dashboard,
+          charter: context.charter,
+          treasury: context.treasury,
+          liquidity: context.liquidity,
+          flight: context.flight,
+          fees: context.fees,
+        }, null, 2)}`,
+      },
+    ];
   }
 
   private classifyQuery(question: string): string {
@@ -105,28 +166,42 @@ export class QueryHandler {
     return "general";
   }
 
-  private cannedStatusAnswer(_launchId: string): string {
-    return "This launch is currently in the Stewardship phase. The bonding curve has graduated and the Agency is actively managing liquidity and treasury releases according to the charter.";
-  }
+  private buildGroundedFallbackAnswer(context: QueryContext, queryType: string, question: string): string {
+    const { dashboard, charter, treasury, liquidity, flight, fees } = context;
+    const missing: string[] = [];
 
-  private cannedCharterAnswer(_launchId: string): string {
-    return "The charter defines: daily release rate of 0.20% of remaining treasury, max daily release of 1M tokens, max weekly release of 5M tokens, 99/1 fee split (LP/House), and flight mode triggers at 15K holders + ≤18% top-10 concentration + ≤5% treasury remaining.";
-  }
+    if (!charter) missing.push("charter");
+    if (!treasury) missing.push("treasury");
+    if (!liquidity) missing.push("liquidity");
+    if (!flight) missing.push("flight status");
+    if (!fees) missing.push("fees");
 
-  private cannedTreasuryAnswer(_launchId: string): string {
-    return "The Agency Treasury started with 150M tokens (15% of total supply). Releases follow exponential decay (0.20% of remaining per day), capped at 1M tokens/day and 5M tokens/week. Released tokens primarily flow into LP depth.";
-  }
+    const availability = missing.length ? ` Indexed gaps: ${missing.join(", ")}.` : "";
 
-  private cannedFlightModeAnswer(_launchId: string): string {
-    return "Flight Mode triggers when ALL conditions are met: 15,000+ holders, top-10 concentration ≤18%, and treasury remaining ≤5%. There's also a 180-day forced sunset. Once triggered, Agency stewardship stops permanently.";
-  }
-
-  private cannedFeesAnswer(_launchId: string): string {
-    return "Protocol fees are 1% on each curve trade. Post-graduation, LP fees are harvested daily and split 99% back to LP (compounding) and 1% to the house. House fees stop at Flight Mode.";
-  }
-
-  private cannedMechanicsAnswer(_question: string): string {
-    return "The BondIt.lol Agency system provides transparent, deterministic stewardship during a token's early life. A bonding curve handles the initial trading phase (targeting 85 SOL graduation). After graduation, the Agency manages liquidity on Meteora DLMM, releases treasury tokens gradually, and compounds LP fees — all governed by immutable charter rules. The AI is advisory only and cannot trade or change parameters.";
+    switch (queryType) {
+      case "status":
+        return `${dashboard.name} ($${dashboard.symbol}) is currently ${dashboard.status}. Graduation progress is ${dashboard.curve.graduationProgress}% with ${dashboard.curve.raisedSol} raised and ${dashboard.stewardship.holdersCount.toLocaleString()} holders.${availability}`;
+      case "charter":
+        return charter
+          ? `The live charter for ${dashboard.name} shows a daily release rate of ${formatBpsPercent(charter.charter.dailyReleaseRateBps)}, max daily release ${charter.charter.maxDailyRelease}, max weekly release ${charter.charter.maxWeeklyRelease}, and a fee split of ${charter.charter.feeSplitLpBps / 100}% LP / ${charter.charter.feeSplitHouseBps / 100}% House.${availability}`
+          : `The launch is indexed, but the charter snapshot is unavailable right now.${availability}`;
+      case "treasury":
+        return treasury
+          ? `Treasury remaining is ${treasury.remaining} (${treasury.remainingPct.toFixed(2)}%). Released today: ${treasury.releasedToday}. Released this week: ${treasury.releasedThisWeek}. Total released: ${treasury.totalReleased}.${availability}`
+          : `Treasury data is unavailable for this indexed launch right now.${availability}`;
+      case "flight_mode":
+        return flight
+          ? `Flight mode is ${flight.isFlightMode ? "active" : flight.eligible ? "eligible but not yet active" : "not yet eligible"}. Holders are ${flight.conditions.holdersCount.toLocaleString()} / ${flight.conditions.holdersTarget.toLocaleString()}, top-10 concentration is ${formatBpsPercent(flight.conditions.top10ConcentrationBps)} against a ≤ ${formatBpsPercent(flight.conditions.top10Target)} target, and treasury remaining is ${formatBpsPercent(flight.conditions.treasuryRemainingBps)} against a ≤ ${formatBpsPercent(flight.conditions.treasuryTarget)} target. Days since graduation: ${formatDays(flight.conditions.daysSinceGraduation)} of ${formatDays(flight.conditions.maxDays)}.${availability}`
+          : `Flight mode eligibility data is unavailable for this indexed launch right now.${availability}`;
+      case "fees":
+        return fees
+          ? `Live fee totals show ${fees.totalFeesCollected} collected overall, ${fees.lpFeesCompounded} compounded back to LP, and ${fees.houseFeesCollected} collected for the house. The indexed split is ${fees.feeSplitLp}% LP / ${fees.feeSplitHouse}% House.${availability}`
+          : `Fee breakdown data is unavailable for this indexed launch right now.${availability}`;
+      case "mechanics":
+        return `BondIt uses an indexed bonding-curve and stewardship flow: launches progress from ${dashboard.status}, treasury releases follow the immutable charter when available, and post-graduation liquidity plus fees are tracked through indexer snapshots. Ask a narrower question if you want a specific treasury, charter, fee, or flight-mode breakdown.${availability}`;
+      default:
+        return `I can answer questions about ${dashboard.name} ($${dashboard.symbol}) using live indexed status, treasury, charter, liquidity, fee, and flight-mode data. Your question was: "${question}".${availability}`;
+    }
   }
 }
 

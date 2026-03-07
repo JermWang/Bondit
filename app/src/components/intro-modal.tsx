@@ -245,16 +245,16 @@ function CliSVG() {
           <text x="0" y="86" fill="#A9FF00">$</text>
           <text x="12" y="86" fill="#F1F1F4" className="type-text3">bondit launch create</text>
           <rect x="132" y="78" width="6" height="10" fill="#A9FF00" className="cursor3">
-            <animate attributeName="opacity" values="1;0;1" dur="0.8s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="1;0;1" dur="0.8s" repeatCount="indefinite"/>
           </rect>
         </g>
 
         {/* Output 3 (Success Block) */}
         <g style={{animation:"slideUpFade 0.4s ease-out 6.0s both"}}>
-          <rect x="-5" y="100" width="240" height="42" rx="4" fill="rgba(169,255,0,0.05)" stroke="rgba(169,255,0,0.2)" strokeWidth="1"/>
-          <text x="5" y="114" fill="#A9FF00" fontSize="9" fontWeight="bold">SUCCESS: Token is live on curve</text>
-          <text x="5" y="128" fill="#8B8FA3" fontSize="8.5">Mint: 7xK...9qL</text>
-          <text x="230" y="128" fill="#00FFB2" fontSize="8.5" textAnchor="end">copy</text>
+          <rect x="-5" y="96" width="240" height="36" rx="4" fill="rgba(169,255,0,0.05)" stroke="rgba(169,255,0,0.2)" strokeWidth="1"/>
+          <text x="5" y="109" fill="#A9FF00" fontSize="9" fontWeight="bold">SUCCESS: Token is live on curve</text>
+          <text x="5" y="122" fill="#8B8FA3" fontSize="8.5">Mint: 7xK...9qL</text>
+          <text x="230" y="122" fill="#00FFB2" fontSize="8.5" textAnchor="end">copy</text>
         </g>
       </g>
 

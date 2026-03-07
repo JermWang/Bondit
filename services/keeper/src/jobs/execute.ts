@@ -1,7 +1,10 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { logger } from "../logger";
-import { getActiveStewardingLaunches, rowToPublicKeys, recordTreasurySnapshot, recordPolicyAction } from "../db";
+import { getActiveStewardingLaunches, rowToPublicKeys } from "../db";
+
+const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
 /**
  * Daily Execution Job
@@ -61,28 +64,9 @@ export class ExecuteJob {
     // In production: build and send transactions
     // const sig = await this.submitReleaseTx(launch, cappedRelease);
 
-    // 6. Record treasury snapshot to DB
-    const newRemaining = treasuryBalance.sub(cappedRelease);
-    const totalSupplyUnits = new BN(1_000_000_000).mul(new BN(1_000_000));
-    const remainingPct = newRemaining.mul(new BN(10000)).div(totalSupplyUnits).toNumber() / 100;
-    await recordTreasurySnapshot(
-      launch.launchId,
-      BigInt(newRemaining.toString()),
-      remainingPct,
-      BigInt(cappedRelease.toString()), // simplified: just today's release as total
-      BigInt(cappedRelease.toString()),
-      BigInt(cappedRelease.toString()),
-    );
-
-    // 7. Record policy action
-    await recordPolicyAction(
-      launch.launchId,
-      "treasury_release",
-      0, // TODO: fetch real action index from on-chain state
-      `Released ${cappedRelease.toString()} units from treasury`,
-      "pending", // TODO: real tx signature once tx submission is wired
-      0,
-      { released: cappedRelease.toString(), remaining: newRemaining.toString() },
+    logger.warn(
+      { launchId: launch.launchId, treasuryVault: launch.treasuryVault.toBase58() },
+      "ExecuteJob: transaction submission not wired yet; skipping DB mutations to avoid fabricated execution state",
     );
 
     logger.info({ launchId: launch.launchId }, "ExecuteJob: completed");
@@ -108,13 +92,30 @@ export class ExecuteJob {
       .filter((r) => r.vault_state && r.policy_state)
       .map((r) => {
         const keys = rowToPublicKeys(r);
+        const [treasuryVault] = PublicKey.findProgramAddressSync(
+          [
+            keys.vaultState!.toBuffer(),
+            TOKEN_PROGRAM_ID.toBuffer(),
+            keys.mint.toBuffer(),
+          ],
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+        );
+        const [lpReserveVault] = PublicKey.findProgramAddressSync(
+          [
+            keys.vaultState!.toBuffer(),
+            TOKEN_PROGRAM_ID.toBuffer(),
+            keys.mint.toBuffer(),
+          ],
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+        );
+
         return {
           launchId: r.launch_id,
           mint: keys.mint,
           policyState: keys.policyState!,
           vaultState: keys.vaultState!,
-          treasuryVault: keys.vaultState!, // TODO: resolve actual treasury ATA
-          lpReserveVault: keys.vaultState!, // TODO: resolve actual LP reserve ATA
+          treasuryVault,
+          lpReserveVault,
         };
       });
   }

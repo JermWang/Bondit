@@ -1,14 +1,97 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useState } from "react";
+import { buildCreateLaunchTransaction } from "@/lib/launch-transaction";
 
 function shortenAddress(address: string) {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
+function getCluster(endpoint: string): string {
+  if (endpoint.includes("devnet")) return "devnet";
+  if (endpoint.includes("testnet")) return "testnet";
+  return "mainnet-beta";
+}
+
 export default function LaunchPage() {
-  const { connected, publicKey } = useWallet();
+  const { connection } = useConnection();
+  const { connected, publicKey, sendTransaction } = useWallet();
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [uri, setUri] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [mode, setMode] = useState<"native" | "pumproute">("native");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<{
+    launchIdHex: string;
+    launchState: string;
+    signature: string;
+    tokenMint: string;
+  } | null>(null);
+
+  const trimmedName = name.trim();
+  const trimmedSymbol = symbol.trim().toUpperCase();
+  const trimmedUri = uri.trim();
+  const trimmedIdempotencyKey = idempotencyKey.trim();
+  const canSubmit = connected && publicKey && trimmedName && trimmedSymbol && trimmedUri && !isSubmitting;
+
+  async function handleLaunch() {
+    if (!publicKey || !sendTransaction || !trimmedName || !trimmedSymbol || !trimmedUri) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const build = await buildCreateLaunchTransaction({
+        creator: publicKey,
+        name: trimmedName,
+        symbol: trimmedSymbol,
+        uri: trimmedUri,
+        mode,
+        idempotencyKey: trimmedIdempotencyKey || undefined,
+      });
+
+      const existing = await connection.getAccountInfo(build.pdas.launchState.address);
+      if (existing) {
+        throw new Error("A launch already exists for this idempotency key. Use a new idempotency key to create another launch.");
+      }
+
+      const latestBlockhash = await connection.getLatestBlockhash();
+      build.transaction.feePayer = publicKey;
+      build.transaction.recentBlockhash = latestBlockhash.blockhash;
+
+      const signature = await sendTransaction(build.transaction, connection, {
+        maxRetries: 2,
+        preflightCommitment: "confirmed",
+      });
+
+      await connection.confirmTransaction(
+        {
+          signature,
+          blockhash: latestBlockhash.blockhash,
+          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+        },
+        "confirmed",
+      );
+
+      setSuccess({
+        launchIdHex: build.launchIdHex,
+        launchState: build.pdas.launchState.address.toBase58(),
+        signature,
+        tokenMint: build.pdas.tokenMint.address.toBase58(),
+      });
+    } catch (launchError) {
+      setError(launchError instanceof Error ? launchError.message : "Launch submission failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-12">
@@ -36,7 +119,7 @@ export default function LaunchPage() {
             </div>
             <p className="text-[13px] text-[#8B8FA3] leading-relaxed max-w-2xl">
               {connected
-                ? "Your wallet is connected. Review your token metadata and charter parameters, then proceed to the launch confirmation flow."
+                ? "Your wallet is connected. Review your token metadata, choose a launch mode, and submit the real on-chain launch transaction from this page."
                 : "Connect a Solana wallet before you create a launch. BondIt uses wallet state to anchor creator identity, launch transactions, and on-chain stewardship registration."}
             </p>
           </div>
@@ -56,26 +139,20 @@ export default function LaunchPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Token Name</label>
-                <input type="text" placeholder="e.g. My Token" className="glass-input w-full px-4 py-3 text-[14px]" />
+                <input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. My Token" className="glass-input w-full px-4 py-3 text-[14px]" />
               </div>
               <div>
                 <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Ticker</label>
-                <input type="text" placeholder="e.g. GIGA" className="glass-input w-full px-4 py-3 text-[14px]" />
+                <input type="text" value={symbol} onChange={(event) => setSymbol(event.target.value.replace(/\s+/g, ""))} placeholder="e.g. GIGA" className="glass-input w-full px-4 py-3 text-[14px] uppercase" maxLength={10} />
               </div>
               <div>
-                <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Description</label>
-                <textarea placeholder="Brief description of your token..." rows={3} className="glass-input w-full px-4 py-3 text-[14px] resize-none" />
+                <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Metadata URI</label>
+                <input type="url" value={uri} onChange={(event) => setUri(event.target.value)} placeholder="https://.../metadata.json" className="glass-input w-full px-4 py-3 text-[14px]" />
               </div>
               <div>
-                <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Token Image</label>
-                <div className="glass-input flex items-center justify-center py-8 cursor-pointer hover:bg-[#F7D2C4]/[0.05] transition-colors group">
-                  <div className="text-center">
-                    <svg className="w-8 h-8 mx-auto text-[#8B8FA3] group-hover:text-[#754975] transition-colors mb-2" fill="none" viewBox="0 0 24 24" stroke="#754975" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-[12px] text-[#8B8FA3] group-hover:text-[#754975]">Click to upload or drag & drop</span>
-                  </div>
-                </div>
+                <label className="block text-[12px] text-[#8B8FA3] mb-1.5 font-medium uppercase tracking-wider">Idempotency Key</label>
+                <input type="text" value={idempotencyKey} onChange={(event) => setIdempotencyKey(event.target.value)} placeholder="Optional stable key for safe retries" className="glass-input w-full px-4 py-3 text-[14px]" />
+                <p className="text-[11px] text-[#8B8FA3] mt-2">Leave blank to auto-generate a fresh launch ID. Reuse a key only when you want retry-safe resubmission behavior.</p>
               </div>
             </div>
           </div>
@@ -86,7 +163,7 @@ export default function LaunchPage() {
               Launch Type
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="glass-card-interactive !p-4 !border-[#A9FF00]/20 !bg-[#A9FF00]/[0.06]">
+              <button type="button" onClick={() => setMode("native")} className={`glass-card-interactive !p-4 text-left ${mode === "native" ? "!border-[#A9FF00]/20 !bg-[#A9FF00]/[0.06]" : ""}`}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-lg bg-[#A9FF00]/15 flex items-center justify-center">
                     <svg className="w-4 h-4 text-[#A9FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -98,29 +175,61 @@ export default function LaunchPage() {
                 <p className="text-[12px] text-[#8B8FA3] leading-relaxed">
                   Launch through BondIt.lol bonding curve with full Agency stewardship.
                 </p>
-              </div>
-              <div className="glass-card-interactive !p-4 opacity-40">
+              </button>
+              <button type="button" onClick={() => setMode("pumproute")} className={`glass-card-interactive !p-4 text-left ${mode === "pumproute" ? "!border-[#3B82F6]/20 !bg-[#3B82F6]/[0.06]" : ""}`}>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                    <svg className="w-4 h-4 text-[#8B8FA3]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/15 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   </div>
-                  <span className="text-[14px] font-semibold text-[#8B8FA3]">Pump Route</span>
+                  <span className="text-[14px] font-semibold text-[#F1F1F4]">Pump Route</span>
                 </div>
                 <p className="text-[12px] text-[#8B8FA3] leading-relaxed">
-                  Route through external pump-style rail with Agency overlay.
+                  Submit the same alternate launch mode enum used by the CLI create flow.
                 </p>
-              </div>
+              </button>
             </div>
           </div>
 
           <button
+            onClick={() => void handleLaunch()}
             className="btn-glow w-full !py-4 text-[15px] disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-            disabled={!connected}
+            disabled={!canSubmit}
           >
-            {connected ? "Continue to Launch Confirmation" : "Connect Wallet to Launch"}
+            {isSubmitting ? "Submitting Launch..." : connected ? "Launch Token On-Chain" : "Connect Wallet to Launch"}
           </button>
+
+          {error ? (
+            <div className="glass-card !py-4 border border-[#FF3B5C]/20 text-[13px] text-[#F1F1F4]">
+              <div className="text-[#FF3B5C] font-semibold mb-1">Launch failed</div>
+              <div className="text-[#8B8FA3] leading-relaxed">{error}</div>
+            </div>
+          ) : null}
+
+          {success ? (
+            <div className="glass-card !py-4 border border-[#00FFB2]/20 text-[13px] text-[#F1F1F4]">
+              <div className="text-[#00FFB2] font-semibold mb-3">Launch submitted successfully</div>
+              <div className="space-y-2 text-[12px]">
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#8B8FA3]">Launch State</span>
+                  <span className="font-mono text-right break-all">{success.launchState}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#8B8FA3]">Token Mint</span>
+                  <span className="font-mono text-right break-all">{success.tokenMint}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#8B8FA3]">Launch ID</span>
+                  <span className="font-mono text-right break-all">{success.launchIdHex}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[#8B8FA3]">Signature</span>
+                  <a href={`https://explorer.solana.com/tx/${success.signature}?cluster=${getCluster(connection.rpcEndpoint)}`} target="_blank" rel="noreferrer" className="font-mono text-right break-all text-[#A9FF00] hover:underline">{success.signature}</a>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {/* CLI link */}
           <div className="mt-2 text-center">
@@ -144,7 +253,7 @@ export default function LaunchPage() {
                 { label: "Treasury", value: "150M (15%)", accent: true },
                 { label: "LP Reserve", value: "50M (5%)", accent: false },
                 { label: "Graduation Target", value: "85 SOL", accent: true },
-                { label: "Protocol Fee", value: "1% (100 bps)", accent: false },
+                { label: "Protocol Fee", value: mode === "native" ? "1% (100 bps)" : "Route dependent", accent: false },
                 { label: "Fee Split", value: "99% LP / 1% House", accent: true },
                 { label: "Daily Release", value: "0.20% remaining", accent: false },
                 { label: "Max Daily", value: "1,000,000 tokens", accent: false },

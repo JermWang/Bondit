@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -39,23 +38,8 @@ const MORE_ITEMS: MoreItem[] = [
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    }
-    if (moreOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [moreOpen]);
-
-  function handleMoreItem(item: MoreItem) {
-    setMoreOpen(false);
+  function handleAuxItem(item: MoreItem) {
     if ("action" in item && item.action === "replay-intro") {
       window.dispatchEvent(new Event("bondit:replay-intro"));
     }
@@ -80,55 +64,38 @@ export function SidebarNav() {
         );
       })}
 
-      {/* More dropdown */}
-      <div ref={moreRef} className="relative">
-        <button
-          onClick={() => setMoreOpen(!moreOpen)}
-          className={`sidebar-link w-full ${moreOpen ? "sidebar-link-active" : ""}`}
-        >
-          <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-          </svg>
-          <span>More</span>
-          <svg
-            className={`w-3.5 h-3.5 ml-auto transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-          >
-            <path d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+      {MORE_ITEMS.map((item) => {
+        const active = !!item.href && (pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
 
-        {moreOpen && (
-          <div className="flex flex-col gap-0.5 mt-0.5 ml-3 pl-3 border-l border-white/[0.06]">
-            {MORE_ITEMS.map((item) =>
-              "href" in item && item.href ? (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => handleMoreItem(item)}
-                  className="sidebar-link !text-[12px] !py-1.5 !gap-2 text-[#8B8FA3] hover:text-[#F1F1F4]"
-                >
-                  <svg className="w-[14px] h-[14px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                    <path d={item.icon} />
-                  </svg>
-                  <span>{item.label}</span>
-                </Link>
-              ) : (
-                <button
-                  key={item.label}
-                  onClick={() => handleMoreItem(item)}
-                  className="sidebar-link !text-[12px] !py-1.5 !gap-2 text-[#8B8FA3] hover:text-[#F1F1F4] w-full"
-                >
-                  <svg className="w-[14px] h-[14px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                    <path d={item.icon} />
-                  </svg>
-                  <span>{item.label}</span>
-                </button>
-              )
-            )}
-          </div>
-        )}
-      </div>
+        if (item.href) {
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => handleAuxItem(item)}
+              className={`sidebar-link ${active ? "sidebar-link-active" : ""}`}
+            >
+              <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d={item.icon} />
+              </svg>
+              <span>{item.label}</span>
+            </Link>
+          );
+        }
+
+        return (
+          <button
+            key={item.label}
+            onClick={() => handleAuxItem(item)}
+            className="sidebar-link w-full"
+          >
+            <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d={item.icon} />
+            </svg>
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }

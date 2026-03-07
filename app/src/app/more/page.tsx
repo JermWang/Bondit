@@ -51,10 +51,10 @@ export default function MorePage() {
             { label: "Keeper", value: "Cron scheduler for monitor/execute/compound/flight checks" },
             { label: "OpenClaw AI (3002)", value: "Generates reports and answers launch questions" },
             { label: "Database", value: "Postgres via DATABASE_URL (Supabase-compatible)" },
-            { label: "Frontend", value: "Reads indexer + advisory APIs, never signs backend actions" },
-            { label: "Current TODOs", value: "Keeper DB hydration + tx submission + AI grounding to indexed data", accentClassName: "text-[#F59E0B]" },
+            { label: "Frontend", value: "Reads indexer + advisory APIs and can submit launch transactions from the connected wallet" },
+            { label: "Current Focus", value: "Finalize keeper-side transaction submission and expand ops documentation", accentClassName: "text-[#F59E0B]" },
           ],
-          footer: "Next docs upgrade: include sequence diagrams + example payloads for each backend endpoint.",
+          footer: "Live discovery, dashboard, chat, AI reports, and web launch flows are now wired to real services. Next docs upgrade: include sequence diagrams + example payloads for each backend endpoint.",
         },
       ]}
     />

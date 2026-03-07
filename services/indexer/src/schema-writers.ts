@@ -46,17 +46,14 @@ function getLaunchStatus(eventName: string): number {
   }
 }
 
-function defaultMintForLaunch(launchId: string): string {
-  return `unknown-mint-${launchId}`;
-}
-
-function defaultNameForLaunch(launchId: string): string {
-  return `Launch ${launchId.slice(0, 8)}`;
-}
-
-function defaultSymbolForLaunch(launchId: string): string {
-  return `L${launchId.slice(0, 5).toUpperCase()}`;
-}
+type LaunchCreatedSeed = {
+  created_at_ms: number;
+  creator: string | null;
+  launch_mode: string | null;
+  mint: string | null;
+  name: string | null;
+  symbol: string | null;
+};
 
 async function getLaunchTreasurySupply(pool: Pool, launchId: string): Promise<number | null> {
   const result = await pool.query<{ treasury_supply: string | null }>(
@@ -80,7 +77,48 @@ async function getLaunchTreasurySupply(pool: Pool, launchId: string): Promise<nu
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-async function ensureLaunchRow(pool: Pool, launchId: string, mint?: string | null): Promise<void> {
+async function getLaunchCreatedSeed(pool: Pool, launchId: string): Promise<LaunchCreatedSeed | null> {
+  const result = await pool.query<LaunchCreatedSeed>(
+    `
+      SELECT
+        EXTRACT(EPOCH FROM received_at) * 1000 AS created_at_ms,
+        decoded_payload->>'creator' AS creator,
+        decoded_payload->>'launch_mode' AS launch_mode,
+        decoded_payload->>'mint' AS mint,
+        decoded_payload->>'name' AS name,
+        decoded_payload->>'symbol' AS symbol
+      FROM indexed_events
+      WHERE event_name = 'LaunchCreated'
+        AND decoded_payload->>'launch_id' = $1
+      ORDER BY received_at DESC
+      LIMIT 1
+    `,
+    [launchId],
+  );
+
+  const row = result.rows[0];
+  if (!row?.creator || !row.mint || !row.name || !row.symbol) {
+    return null;
+  }
+
+  return row;
+}
+
+async function ensureLaunchRow(pool: Pool, launchId: string, mint?: string | null): Promise<boolean> {
+  const existing = await pool.query<{ launch_id: string }>(
+    `SELECT launch_id FROM launches WHERE launch_id = $1 LIMIT 1`,
+    [launchId],
+  );
+  if (existing.rows[0]) {
+    return true;
+  }
+
+  const seed = await getLaunchCreatedSeed(pool, launchId);
+  if (!seed) {
+    logger.warn({ launchId }, "SchemaWriter: skipping projection until LaunchCreated metadata is indexed");
+    return false;
+  }
+
   await pool.query(
     `
       INSERT INTO launches (
@@ -95,8 +133,17 @@ async function ensureLaunchRow(pool: Pool, launchId: string, mint?: string | nul
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (launch_id) DO NOTHING
     `,
-    [launchId, "unknown", mint ?? defaultMintForLaunch(launchId), defaultNameForLaunch(launchId), defaultSymbolForLaunch(launchId), 0, 0],
+    [
+      launchId,
+      seed.creator,
+      mint ?? seed.mint,
+      seed.name,
+      seed.symbol,
+      Number(seed.launch_mode ?? 0),
+      0,
+    ],
   );
+  return true;
 }
 
 async function persistLaunchProjection(pool: Pool, event: IndexedEventEnvelope): Promise<boolean> {
@@ -127,10 +174,10 @@ async function persistLaunchProjection(pool: Pool, event: IndexedEventEnvelope):
       `,
       [
         launchId,
-        getStringField(event, "creator") ?? "unknown",
-        getStringField(event, "mint") ?? defaultMintForLaunch(launchId),
-        getStringField(event, "name") ?? defaultNameForLaunch(launchId),
-        getStringField(event, "symbol") ?? defaultSymbolForLaunch(launchId),
+        getStringField(event, "creator"),
+        getStringField(event, "mint"),
+        getStringField(event, "name"),
+        getStringField(event, "symbol"),
         Number(getStringField(event, "launch_mode") ?? 0),
         0,
         getEventTimestampMs(event),
@@ -140,7 +187,7 @@ async function persistLaunchProjection(pool: Pool, event: IndexedEventEnvelope):
   }
 
   if (event.eventName === "LaunchGraduated") {
-    await ensureLaunchRow(pool, launchId, getStringField(event, "mint"));
+    if (!(await ensureLaunchRow(pool, launchId, getStringField(event, "mint")))) return false;
     await pool.query(
       `
         UPDATE launches
@@ -165,7 +212,7 @@ async function persistLaunchProjection(pool: Pool, event: IndexedEventEnvelope):
   }
 
   if (event.eventName === "LaunchFlightMode") {
-    await ensureLaunchRow(pool, launchId, getStringField(event, "mint"));
+    if (!(await ensureLaunchRow(pool, launchId, getStringField(event, "mint")))) return false;
     await pool.query(
       `
         UPDATE launches
@@ -189,7 +236,7 @@ async function persistTradeProjection(pool: Pool, event: IndexedEventEnvelope): 
   const launchId = getStringField(event, "launch_id");
   if (!launchId) return false;
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   await pool.query(
     `
@@ -269,7 +316,7 @@ async function persistPolicyActionProjection(pool: Pool, event: IndexedEventEnve
   const launchId = getStringField(event, "launch_id");
   if (!launchId) return false;
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   await pool.query(
     `
@@ -307,7 +354,7 @@ async function persistHolderSnapshotProjection(pool: Pool, event: IndexedEventEn
   const launchId = getStringField(event, "launch_id");
   if (!launchId) return false;
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   await pool.query(
     `
@@ -340,7 +387,7 @@ async function persistMarketMetricProjection(pool: Pool, event: IndexedEventEnve
     return false;
   }
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   const priceNumerator = event.eventName === "PriceQuote" ? getNumberField(event, "current_price_num") : null;
   const priceDenominator = event.eventName === "PriceQuote" ? getNumberField(event, "current_price_den") : null;
@@ -383,7 +430,7 @@ async function persistTreasurySnapshotProjection(pool: Pool, event: IndexedEvent
   const launchId = getStringField(event, "launch_id");
   if (!launchId) return false;
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   const remaining = getNumberField(event, "treasury_remaining");
   const releasedAmount = getNumberField(event, "amount");
@@ -429,7 +476,7 @@ async function persistLiquiditySnapshotProjection(pool: Pool, event: IndexedEven
   const launchId = getStringField(event, "launch_id");
   if (!launchId) return false;
 
-  await ensureLaunchRow(pool, launchId, null);
+  if (!(await ensureLaunchRow(pool, launchId, null))) return false;
 
   await pool.query(
     `

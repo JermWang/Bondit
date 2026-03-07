@@ -3,6 +3,12 @@ import BN from "bn.js";
 import { logger } from "../logger";
 import { getActiveStewardingLaunches, rowToPublicKeys } from "../db";
 
+type HarvestResult = {
+  available: boolean;
+  sol: BN;
+  tokens: BN;
+};
+
 /**
  * Daily Compound Job
  * 
@@ -35,6 +41,11 @@ export class CompoundJob {
   private async compoundLaunch(launch: ActiveLaunch): Promise<void> {
     // 1. Harvest fees from LP position via VenueAdapter
     const harvestedFees = await this.harvestFees(launch);
+
+    if (!harvestedFees.available) {
+      logger.warn({ launchId: launch.launchId }, "CompoundJob: venue fee harvest is not wired yet; skipping compound execution");
+      return;
+    }
 
     if (harvestedFees.sol.isZero() && harvestedFees.tokens.isZero()) {
       logger.info({ launchId: launch.launchId }, "CompoundJob: no fees to harvest");
@@ -70,10 +81,8 @@ export class CompoundJob {
     logger.info({ launchId: launch.launchId }, "CompoundJob: completed");
   }
 
-  private async harvestFees(launch: ActiveLaunch): Promise<{ sol: BN; tokens: BN }> {
-    // In production: CPI to venue_adapters::harvest_fees and read return data
-    // For now, return zeros
-    return { sol: new BN(0), tokens: new BN(0) };
+  private async harvestFees(_launch: ActiveLaunch): Promise<HarvestResult> {
+    return { available: false, sol: new BN(0), tokens: new BN(0) };
   }
 
   private async getActiveLaunches(): Promise<ActiveLaunch[]> {
@@ -87,10 +96,6 @@ export class CompoundJob {
           mint: keys.mint,
           adapterState: keys.adapterState!,
           vaultState: keys.vaultState!,
-          feeAccumulatorSol: keys.vaultState!, // TODO: resolve actual fee accumulator ATA
-          houseVaultSol: keys.vaultState!, // TODO: resolve actual house vault
-          poolAddress: keys.adapterState!, // TODO: resolve from adapter state
-          positionAddress: keys.adapterState!, // TODO: resolve from adapter state
         };
       });
   }
@@ -101,8 +106,4 @@ interface ActiveLaunch {
   mint: PublicKey;
   adapterState: PublicKey;
   vaultState: PublicKey;
-  feeAccumulatorSol: PublicKey;
-  houseVaultSol: PublicKey;
-  poolAddress: PublicKey;
-  positionAddress: PublicKey;
 }

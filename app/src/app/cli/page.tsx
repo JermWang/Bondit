@@ -75,7 +75,7 @@ export default function CLIPage() {
               const config = JSON.stringify({
                 name: "My Token",
                 symbol: "MYTKN",
-                uri: "https://arweave.net/placeholder",
+                uri: "https://example.com/metadata/my-token.json",
                 mode: "native",
                 walletProvider: "phantom",
                 rpcUrl: "https://api.devnet.solana.com",

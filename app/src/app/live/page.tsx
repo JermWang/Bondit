@@ -24,7 +24,7 @@ export default function LivePage() {
             { label: "Highest velocity", value: "GIGA / $892K 24h", accentClassName: "text-[#A9FF00]" },
             { label: "Most mature", value: "BRETT / Flight Mode", accentClassName: "text-[#00FFB2]" },
           ],
-          footer: "This surface is designed to converge on indexer-backed live snapshots once the event pipeline is fully online.",
+          footer: "Discovery, dashboard, and advisory surfaces now read live indexer data. This page is the next candidate for a fully realtime multi-panel rollout.",
         },
         {
           title: "Transition Watch",
@@ -38,7 +38,7 @@ export default function LivePage() {
         },
         {
           title: "Operator Notes",
-          description: "What this page will mature into as the data plane completes.",
+          description: "What this page is positioned to expose next on top of the grounded indexer and advisory stack.",
           items: [
             { label: "Realtime feed", value: "Indexed trade + launch events" },
             { label: "Discovery sort", value: "Volume, activity, velocity, risk" },

@@ -2,7 +2,6 @@ import { Router, Request, Response, NextFunction } from "express";
 import { Connection } from "@solana/web3.js";
 import { logger } from "./logger";
 import { IndexerReadModel } from "./read-model";
-import { getSampleLaunchRecord, listSampleLaunches } from "./sample-data";
 
 const LAUNCH_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
@@ -22,10 +21,6 @@ export class ApiRouter {
 
   getRouter(): Router {
     return this.router;
-  }
-
-  private getRecord(launchId: string) {
-    return getSampleLaunchRecord(launchId);
   }
 
   private respondNotFound(res: Response, launchId: string, resource: string): void {
@@ -78,13 +73,7 @@ export class ApiRouter {
   private async getLaunches(_req: Request, res: Response): Promise<void> {
     try {
       const live = await this.readModel.listLaunches();
-      if (live && live.total > 0) {
-        res.json(live);
-        return;
-      }
-
-      const launches = listSampleLaunches();
-      res.json({ launches, total: launches.length });
+      res.json(live ?? { launches: [], total: 0 });
     } catch (err) {
       logger.error({ err }, "API: getLaunches failed");
       res.status(500).json({ error: "Internal server error" });
@@ -99,14 +88,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "launch");
-        return;
-      }
-
-      res.json(record.launch);
+      this.respondNotFound(res, launchId, "launch");
     } catch (err) {
       logger.error({ err }, "API: getLaunchById failed");
       res.status(500).json({ error: "Internal server error" });
@@ -121,14 +103,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "curve state");
-        return;
-      }
-
-      res.json(record.curve);
+      this.respondNotFound(res, launchId, "curve state");
     } catch (err) {
       logger.error({ err }, "API: getCurveData failed");
       res.status(500).json({ error: "Internal server error" });
@@ -145,15 +120,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "trades");
-        return;
-      }
-
-      const trades = record.trades.slice(offset, offset + limit);
-      res.json({ launchId, trades, total: record.trades.length, limit, offset });
+      this.respondNotFound(res, launchId, "trades");
     } catch (err) {
       logger.error({ err }, "API: getTrades failed");
       res.status(500).json({ error: "Internal server error" });
@@ -168,14 +135,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "charter");
-        return;
-      }
-
-      res.json(record.charter);
+      this.respondNotFound(res, launchId, "charter");
     } catch (err) {
       logger.error({ err }, "API: getCharter failed");
       res.status(500).json({ error: "Internal server error" });
@@ -190,14 +150,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "treasury state");
-        return;
-      }
-
-      res.json(record.treasury);
+      this.respondNotFound(res, launchId, "treasury state");
     } catch (err) {
       logger.error({ err }, "API: getTreasuryStatus failed");
       res.status(500).json({ error: "Internal server error" });
@@ -213,15 +166,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "policy actions");
-        return;
-      }
-
-      const actions = record.policyActions.slice(0, limit);
-      res.json({ launchId, actions, total: record.policyActions.length, limit });
+      this.respondNotFound(res, launchId, "policy actions");
     } catch (err) {
       logger.error({ err }, "API: getPolicyActions failed");
       res.status(500).json({ error: "Internal server error" });
@@ -236,14 +181,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "holder stats");
-        return;
-      }
-
-      res.json(record.holders);
+      this.respondNotFound(res, launchId, "holder stats");
     } catch (err) {
       logger.error({ err }, "API: getHolderStats failed");
       res.status(500).json({ error: "Internal server error" });
@@ -258,14 +196,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "liquidity stats");
-        return;
-      }
-
-      res.json(record.liquidity);
+      this.respondNotFound(res, launchId, "liquidity stats");
     } catch (err) {
       logger.error({ err }, "API: getLiquidityStats failed");
       res.status(500).json({ error: "Internal server error" });
@@ -280,14 +211,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "flight status");
-        return;
-      }
-
-      res.json(record.flight);
+      this.respondNotFound(res, launchId, "flight status");
     } catch (err) {
       logger.error({ err }, "API: getFlightStatus failed");
       res.status(500).json({ error: "Internal server error" });
@@ -302,14 +226,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "fee breakdown");
-        return;
-      }
-
-      res.json(record.fees);
+      this.respondNotFound(res, launchId, "fee breakdown");
     } catch (err) {
       logger.error({ err }, "API: getFeeBreakdown failed");
       res.status(500).json({ error: "Internal server error" });
@@ -324,14 +241,7 @@ export class ApiRouter {
         res.json(live);
         return;
       }
-
-      const record = this.getRecord(launchId);
-      if (!record) {
-        this.respondNotFound(res, launchId, "dashboard");
-        return;
-      }
-
-      res.json(record.dashboard);
+      this.respondNotFound(res, launchId, "dashboard");
     } catch (err) {
       logger.error({ err }, "API: getDashboard failed");
       res.status(500).json({ error: "Internal server error" });

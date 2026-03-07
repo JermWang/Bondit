@@ -86,7 +86,7 @@ export default async function TokenDetailPage({ params }: { params: { ticker: st
           {/* Top overlays */}
           <div className="absolute top-4 left-4 flex items-center gap-2">
             {getBadge(token.badgeType)}
-            <span className={`badge ${source === "live" ? "badge-green" : "badge-yellow"}`}>{source === "live" ? "Live" : "Fixture"}</span>
+            <span className="badge badge-green">Live</span>
           </div>
           <div className="absolute top-4 right-4">
             <span className={`text-[13px] font-mono font-bold px-3 py-1.5 rounded-lg backdrop-blur-sm ${token.up ? "text-[#00FFB2] bg-[#00FFB2]/10" : "text-[#FF3B5C] bg-[#FF3B5C]/10"}`}>
