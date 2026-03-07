@@ -2,5 +2,15 @@
   "installCommand": "npm install --no-package-lock",
   "buildCommand": "npm run build --workspace @bondit/sdk && npm run build --workspace @bondit/app",
   "outputDirectory": "app/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/referral-payout",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/keeper?job=monitor",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
