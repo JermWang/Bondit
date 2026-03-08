@@ -38,7 +38,7 @@ services:
       - key: VANITY_CHECK_INTERVAL_MS
         value: "10000"
       - key: LAUNCH_FACTORY_PROGRAM_ID
-        value: "LFac1111111111111111111111111111111111111111"
+        sync: false
 
 
 databases:

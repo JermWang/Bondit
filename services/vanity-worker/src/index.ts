@@ -3,11 +3,12 @@ import { Worker } from "worker_threads";
 import path from "path";
 import os from "os";
 import { Pool } from "pg";
+import { PublicKey } from "@solana/web3.js";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
 const SUFFIX = process.env.VANITY_SUFFIX || "LoL";
-const PROGRAM_ID = process.env.LAUNCH_FACTORY_PROGRAM_ID || "LFac1111111111111111111111111111111111111111";
+const PROGRAM_ID = process.env.LAUNCH_FACTORY_PROGRAM_ID || "";
 const SEED_STRING = "token_mint";
 const BACKLOG_TARGET = parseInt(process.env.VANITY_BACKLOG_TARGET || "100", 10);
 const CHECK_INTERVAL_MS = parseInt(process.env.VANITY_CHECK_INTERVAL_MS || "5000", 10);
@@ -154,6 +155,21 @@ async function main(): Promise<void> {
   console.log(`║  Suffix: ${SUFFIX.padEnd(8)}  Target: ${String(BACKLOG_TARGET).padEnd(5)}  Workers: ${String(NUM_WORKERS).padEnd(2)} ║`);
   console.log("╚══════════════════════════════════════════════════╝");
   console.log();
+
+  // Validate program ID before spawning workers
+  if (!PROGRAM_ID) {
+    console.warn("[vanity-worker] LAUNCH_FACTORY_PROGRAM_ID is not set. Sleeping until configured.");
+    await new Promise(() => {}); // sleep forever
+    return;
+  }
+  try {
+    new PublicKey(PROGRAM_ID);
+  } catch {
+    console.error(`[vanity-worker] LAUNCH_FACTORY_PROGRAM_ID is not a valid public key: "${PROGRAM_ID}". Sleeping until fixed.`);
+    await new Promise(() => {}); // sleep forever
+    return;
+  }
+  console.log(`[vanity-worker] Program ID: ${PROGRAM_ID}`);
 
   await ensureTable();
   const initial = await getUnclaimedCount();
