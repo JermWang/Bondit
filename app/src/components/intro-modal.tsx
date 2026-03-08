@@ -14,6 +14,12 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
+    id: "vs",
+    subtitle: "BondIt vs pump.fun",
+    title: "We Launch AND Stay",
+    body: "pump.fun deploys your token and disappears. BondIt deploys and then actively stewards: managing LP on Meteora, compounding fees back into the pool, and releasing the treasury at a fixed daily rate. Deterministic from genesis.",
+  },
+  {
     id: "infra",
     subtitle: "Same speed. Way more infrastructure.",
     title: "PumpFun + Guardrails",
@@ -66,6 +72,132 @@ const SLIDES: Slide[] = [
 ];
 
 /* ─── Animated SVG illustrations ────────────────────────────────── */
+function VsSVG() {
+  return (
+    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <pattern id="vgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.07)" strokeWidth="0.5"/>
+        </pattern>
+        <linearGradient id="redFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FF3B5C" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="#FF3B5C" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id="greenFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#A9FF00" stopOpacity="0.2"/>
+          <stop offset="100%" stopColor="#A9FF00" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect width="320" height="240" fill="url(#vgrid)"/>
+
+      {/* LEFT — pump.fun chart */}
+      <text x="72" y="24" textAnchor="middle" fontSize="11" fill="#FF3B5C" fontFamily="monospace" opacity="0.85">pump.fun</text>
+      <line x1="18" y1="40" x2="18" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+      <line x1="18" y1="165" x2="140" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+
+      {/* Pump-and-dump chart */}
+      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163 L140 165 L22 165Z"
+        fill="url(#redFade)" style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
+      <path d="M22 155 C32 150 42 140 55 95 C62 68 68 48 75 42 C82 48 90 80 100 130 C108 155 118 162 140 163"
+        stroke="#FF3B5C" strokeWidth="2" strokeLinecap="round" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.2s both"}}/>
+
+      {/* Peak label */}
+      <g style={{animation:"fadeIn 0.5s ease-out 1s both"}}>
+        <text x="75" y="36" textAnchor="middle" fontSize="7" fill="#FF3B5C" fontFamily="monospace" opacity="0.7">ATH</text>
+        <line x1="75" y1="38" x2="75" y2="42" stroke="#FF3B5C" strokeWidth="0.5" opacity="0.5"/>
+      </g>
+
+      {/* Crash X markers */}
+      {[[95,115],[110,145],[125,158]].map(([cx,cy],i)=>(
+        <g key={i} style={{animation:`fadeIn 0.3s ease-out ${1.2+i*0.2}s both`}}>
+          <text x={cx} y={cy} textAnchor="middle" fontSize="10" fill="#FF3B5C" opacity="0.6">✕</text>
+        </g>
+      ))}
+
+      {/* Problem labels */}
+      {[
+        {text:"no LP mgmt",y:178},
+        {text:"dev dumps",y:190},
+        {text:"abandoned",y:202},
+      ].map(({text,y},i)=>(
+        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.5+i*0.15}s both`}}>
+          <text x="12" y={y} fontSize="7.5" fill="#FF3B5C" fontFamily="monospace" opacity="0.55">✕ {text}</text>
+        </g>
+      ))}
+
+      <line x1="125" y1="163" x2="142" y2="163" stroke="#FF3B5C" strokeWidth="1" strokeDasharray="2 2" opacity="0.4"
+        style={{animation:"fadeIn 0.5s ease-out 1.8s both"}}/>
+
+      {/* DIVIDER */}
+      <line x1="160" y1="16" x2="160" y2="228" stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
+      <text x="160" y="122" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.12)" fontFamily="monospace">VS</text>
+
+      {/* RIGHT — BondIt chart */}
+      <text x="248" y="24" textAnchor="middle" fontSize="11" fill="#A9FF00" fontFamily="monospace" opacity="0.9">bondit.lol</text>
+      <line x1="178" y1="40" x2="178" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+      <line x1="178" y1="165" x2="305" y2="165" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+
+      {/* Guardrail zone */}
+      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68 L305 90 C290 97 270 106 250 115 C225 128 200 142 182 150Z"
+        fill="rgba(169,255,0,0.06)" stroke="none" style={{animation:"fadeIn 0.8s ease-out 0.5s both"}}/>
+      <path d="M182 135 C200 128 225 110 250 95 C270 84 290 75 305 68"
+        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
+      <path d="M182 150 C200 142 225 128 250 115 C270 106 290 97 305 90"
+        stroke="rgba(169,255,0,0.2)" strokeWidth="1" strokeDasharray="3 3" fill="none"
+        style={{animation:"chartDraw 1.5s ease-out 0.5s both"}}/>
+
+      {/* Steady growth chart */}
+      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75 L305 165 L182 165Z"
+        fill="url(#greenFade)" style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
+      <path d="M182 155 C195 148 210 138 230 120 C245 108 265 97 280 88 C290 82 298 78 305 75"
+        stroke="#A9FF00" strokeWidth="2" strokeLinecap="round" fill="none"
+        style={{animation:"chartDraw 1.8s ease-out 0.3s both"}}/>
+
+      <g style={{animation:"fadeIn 0.5s ease-out 1.2s both"}}>
+        <text x="308" y="65" fontSize="6.5" fill="rgba(169,255,0,0.45)" fontFamily="monospace">guardrails</text>
+      </g>
+
+      {/* Stewardship event dots */}
+      {[
+        {cx:210,cy:138,label:"LP add"},
+        {cx:245,cy:108,label:"dist"},
+        {cx:280,cy:88,label:"compound"},
+      ].map(({cx,cy,label},i)=>(
+        <g key={label} style={{animation:`fadeIn 0.4s ease-out ${1.4+i*0.25}s both`}}>
+          <circle cx={cx} cy={cy} r="3" fill="#A9FF00" opacity="0.8">
+            <animate attributeName="r" values="3;4;3" dur="2s" begin={`${i*0.5}s`} repeatCount="indefinite"/>
+          </circle>
+          <text x={cx} y={cy-7} textAnchor="middle" fontSize="6" fill="rgba(169,255,0,0.6)" fontFamily="monospace">{label}</text>
+        </g>
+      ))}
+
+      {/* Benefit labels */}
+      {[
+        {text:"managed LP",y:178},
+        {text:"treasury decay",y:190},
+        {text:"fee compounding",y:202},
+      ].map(({text,y},i)=>(
+        <g key={text} style={{animation:`fadeIn 0.4s ease-out ${1.8+i*0.15}s both`}}>
+          <text x="178" y={y} fontSize="7.5" fill="#A9FF00" fontFamily="monospace" opacity="0.6">✔ {text}</text>
+        </g>
+      ))}
+
+      {/* Flight mode badge */}
+      <g style={{animation:"fadeIn 0.5s ease-out 2.3s both"}}>
+        <rect x="178" y="210" width="74" height="16" rx="4" fill="rgba(0,255,178,0.1)" stroke="rgba(0,255,178,0.3)" strokeWidth="1"/>
+        <text x="215" y="221" textAnchor="middle" fontSize="7" fill="#00FFB2" fontFamily="monospace">✈ flight mode</text>
+      </g>
+
+      <style>{`
+        @keyframes chartDraw{from{opacity:0;stroke-dashoffset:400;stroke-dasharray:400}to{opacity:1;stroke-dashoffset:0;stroke-dasharray:none}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      `}</style>
+    </svg>
+  );
+}
+
 function InfraSVG() {
   const rows = [
     { label: "LP Depth",      pump: "5%",     bondit: "15%",  y: 68 },
@@ -536,6 +668,7 @@ function TransparencySVG() {
 }
 
 function SlideSVG({ id }: { id: string }) {
+  if (id === "vs") return <VsSVG />;
   if (id === "infra") return <InfraSVG />;
   if (id === "cli") return <CliSVG />;
   if (id === "ai") return <AiSVG />;
@@ -581,7 +714,7 @@ export function IntroModal() {
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
       style={{ background: "rgba(20,24,40,0.55)", backdropFilter: "blur(10px)" }}
     >
-      <div className="relative w-full max-w-[460px] glass !rounded-2xl overflow-hidden animate-fade-in shadow-[0_32px_80px_rgba(0,0,0,0.3)] flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-[460px] glass !rounded-2xl overflow-hidden animate-fade-in shadow-[0_32px_80px_rgba(0,0,0,0.3)] flex flex-col max-h-[85vh] sm:max-h-[90vh]">
 
         {/* Top lime accent line */}
         <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#A9FF00] to-transparent flex-shrink-0" style={{animation:"glowLine 3s ease-in-out infinite"}}/>
@@ -599,21 +732,21 @@ export function IntroModal() {
         </button>
 
         {/* SVG illustration */}
-        <div className="h-[200px] sm:h-[240px] relative overflow-hidden flex-shrink-0" style={{background:"linear-gradient(to bottom, rgba(191,198,216,0.4), rgba(202,208,224,0.15))"}}>
+        <div className="h-[160px] sm:h-[240px] relative overflow-hidden flex-shrink-0" style={{background:"linear-gradient(to bottom, rgba(191,198,216,0.4), rgba(202,208,224,0.15))"}}>
           <SlideSVG id={current.id} />
         </div>
 
         {/* Text content */}
-        <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6 overflow-y-auto">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-5 pb-4 sm:pb-6 overflow-y-auto">
           <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-[#56566A] mb-1.5">{current.subtitle}</div>
-          <h2 className="font-display text-[18px] sm:text-[21px] font-bold text-[#F1F1F4] mb-2 sm:mb-3 leading-tight">{current.title}</h2>
-          <p className="text-[12px] sm:text-[13px] text-[#8B8FA3] leading-[1.6]">{current.body}</p>
+          <h2 className="font-display text-[16px] sm:text-[21px] font-bold text-[#F1F1F4] mb-1.5 sm:mb-3 leading-tight">{current.title}</h2>
+          <p className="text-[11px] sm:text-[13px] text-[#8B8FA3] leading-[1.5] sm:leading-[1.6]">{current.body}</p>
 
           {/* Comparison table for slide 1 */}
           {current.comparison && (
             <div className="mt-3 rounded-xl border border-white/[0.06] overflow-hidden">
               {/* Header */}
-              <div className="grid grid-cols-[1fr_68px_68px] text-[10px] font-mono uppercase tracking-wider px-3 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+              <div className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_68px_68px] text-[9px] sm:text-[10px] font-mono uppercase tracking-wider px-2 sm:px-3 py-2 bg-white/[0.02] border-b border-white/[0.04]">
                 <span className="text-[#56566A]"></span>
                 <span className="text-center text-[#56566A]">Pump</span>
                 <span className="text-center text-[#A9FF00]">BondIt</span>
@@ -622,7 +755,7 @@ export function IntroModal() {
               {current.comparison.map((row, i) => (
                 <div
                   key={row.label}
-                  className={`grid grid-cols-[1fr_68px_68px] px-3 py-[6px] text-[11px] items-center ${
+                  className={`grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_68px_68px] px-2 sm:px-3 py-[5px] sm:py-[6px] text-[10px] sm:text-[11px] items-center ${
                     i % 2 === 0 ? "bg-white/[0.01]" : ""
                   } ${row.highlight ? "border-l-2 border-l-[#A9FF00]/40" : ""}`}
                 >
@@ -635,7 +768,7 @@ export function IntroModal() {
           )}
 
           {/* Nav row */}
-          <div className="flex items-center justify-between mt-5 sm:mt-6 pt-2">
+          <div className="flex items-center justify-between mt-3 sm:mt-6 pt-2">
             {/* Dot indicators */}
             <div className="flex gap-1.5">
               {SLIDES.map((_, i) => (

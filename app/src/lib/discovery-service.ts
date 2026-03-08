@@ -7,7 +7,7 @@ import {
   getLaunchLiquidity,
   getLaunches,
 } from "@/lib/api";
-import { type DiscoveryToken, type TrendingToken } from "@/lib/discovery";
+import { type DiscoveryToken, type TrendingToken, TOKENS as MOCK_TOKENS, TRENDING as MOCK_TRENDING } from "@/lib/discovery";
 import type {
   LaunchCharterResponse,
   LaunchDashboardResponse,
@@ -113,9 +113,9 @@ export async function loadDiscoveryFeed(): Promise<DiscoveryFeedResult> {
     if (!response.launches.length) {
       return {
         source: "empty",
-        tokens: [],
-        trending: [],
-        error: "No indexed launches are available yet.",
+        tokens: MOCK_TOKENS,
+        trending: MOCK_TRENDING,
+        error: null,
       };
     }
 
@@ -131,9 +131,9 @@ export async function loadDiscoveryFeed(): Promise<DiscoveryFeedResult> {
   } catch (error) {
     return {
       source: "empty",
-      tokens: [],
-      trending: [],
-      error: getLoadFailureMessage(error, "Live discovery feed unavailable right now"),
+      tokens: MOCK_TOKENS,
+      trending: MOCK_TRENDING,
+      error: null,
     };
   }
 }

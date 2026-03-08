@@ -153,10 +153,10 @@ function HomeContent() {
             <a
               key={t.ticker}
               href={`/token/${t.ticker.toLowerCase()}`}
-              className="flex-shrink-0 glass !rounded-xl !p-0 overflow-hidden transition-all duration-300 hover:border-white/[0.12] hover:shadow-[0_0_20px_rgba(169,255,0,0.08)] cursor-pointer group w-[160px]"
+              className="flex-shrink-0 glass !rounded-xl !p-0 overflow-hidden transition-all duration-300 hover:border-white/[0.12] hover:shadow-[0_0_20px_rgba(169,255,0,0.08)] cursor-pointer group w-[140px] sm:w-[160px]"
             >
               {/* Visual thumbnail */}
-              <div className="relative h-[90px] overflow-hidden">
+              <div className="relative h-[75px] sm:h-[90px] overflow-hidden">
                 <div className="absolute inset-0" style={getAvatarStyle(t.avatar)} />
                 {t.img ? (
                   <img src={t.img} alt={t.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
@@ -225,7 +225,7 @@ function HomeContent() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 pb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 pb-8">
           {filtered.map((t) => (
             <a
               key={t.ticker}
