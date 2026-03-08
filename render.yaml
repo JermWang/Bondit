@@ -58,6 +58,6 @@ services:
 
 databases:
   - name: bondit-db
-    plan: starter
+    plan: free
     databaseName: bondit
     postgresMajorVersion: "16"
