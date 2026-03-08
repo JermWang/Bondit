@@ -91,16 +91,16 @@ export type DiscoveryTab = (typeof TABS)[number];
 
 export const INTRO_PAGES = [
   {
-    title: "Welcome to BondIt.lol",
-    desc: "Launch tokens with deterministic stewardship. No discretionary trading — only hard-coded rules that guide tokens to organic independence.",
+    title: "Every Token Gets Its Own Agency",
+    desc: "BondIt assigns every launch a dedicated autonomous Agent — not a shared service, not a team. A per-token program that manages LP, compounds fees, and guides your token to community independence.",
   },
   {
     title: "How It Works",
-    desc: "70% bonding curve → Graduate at 85 SOL → Agency stewardship with daily LP compounding → Flight mode at 15K holders. Max 180 days.",
+    desc: "70% bonding curve → Graduate at 85 SOL → Your Agency manages LP compounding, treasury releases, and flight-readiness checks → At 15K holders the Agency dissolves and the community takes full control.",
   },
   {
     title: "Fully Transparent",
-    desc: "Immutable charters, append-only logs, 70/20/10 fee split (LP/house/referral). Every parameter is on-chain and publicly verifiable.",
+    desc: "Every Agency action is logged on-chain with an immutable charter. 70/20/10 fee split (LP/house/referral). No admin keys. No discretion. Publicly verifiable forever.",
   },
 ] as const;
 

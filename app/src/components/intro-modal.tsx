@@ -16,8 +16,14 @@ const SLIDES: Slide[] = [
   {
     id: "vs",
     subtitle: "BondIt vs pump.fun",
-    title: "We Launch AND Stay",
-    body: "pump.fun deploys your token and disappears. BondIt deploys and then actively stewards: managing LP on Meteora, compounding fees back into the pool, and releasing the treasury at a fixed daily rate. Deterministic from genesis.",
+    title: "Your Token Gets Its Own Agency",
+    body: "pump.fun launches your token and walks away. BondIt assigns every single token its own dedicated Agency — an autonomous on-chain agent that manages LP, compounds fees, controls treasury releases, and guides the token to community independence. Not a shared service. Not a team. A per-token program that runs 24/7 with zero human discretion.",
+  },
+  {
+    id: "agency",
+    subtitle: "One token. One Agency. One mission.",
+    title: "The Per-Token Agency Model",
+    body: "This is what makes BondIt fundamentally different. Every launch creates a dedicated Agency instance bound to that token alone. The Agency manages a Meteora LP position, compounds 70% of trading fees back into liquidity, releases treasury at a fixed 0.20%/day decay rate, and monitors flight-readiness conditions — all autonomously, all on-chain, all verifiable. When the community is ready, the Agency dissolves and hands over full control. No other launchpad does this.",
   },
   {
     id: "infra",
@@ -47,21 +53,21 @@ const SLIDES: Slide[] = [
   },
   {
     id: "charter",
-    subtitle: "Every token. Every time.",
+    subtitle: "The Agency's operating system.",
     title: "Immutable On-Chain Charter",
-    body: "At genesis, a charter is written on-chain and locked forever: 70% bonding curve, 15% LP reserve for deep liquidity, 10% agency treasury, 5% ecosystem fund for airdrops and referral rewards. 2% protocol fee split 70/20/10 between LP compounding, house, and referral pool. No admin keys. No parameter changes after mint.",
+    body: "Every Agency runs on a charter written at genesis and locked forever. It defines everything: 70% bonding curve, 15% LP reserve, 10% Agency treasury, 5% ecosystem fund. Fee split: 70% compounded into LP, 20% house, 10% referral pool. The charter is the Agency's DNA — no admin keys can alter it, no multisig can override it. The rules your token launched with are the rules it lives by.",
   },
   {
     id: "distribution",
-    subtitle: "Slow. Fair. Transparent.",
-    title: "Agency Distribution Curve",
-    body: "Treasury releases at exactly 0.20% of remaining per day, hard-capped at 1M tokens daily and 5M weekly. Every release is an on-chain policy event. Distribution progress is visible on every token card so you always know where the guardrails stand.",
+    subtitle: "Your Agency drips, never dumps.",
+    title: "Agency Treasury Distribution",
+    body: "The Agency controls 10% of total supply in its treasury. It releases tokens at exactly 0.20% of remaining per day — hard-capped at 1M daily and 5M weekly. No dev can accelerate this. No whale can negotiate a deal. The Agency follows the same math for every token, every day, logged on-chain. Distribution progress is visible on every token card.",
   },
   {
     id: "flight",
-    subtitle: "Deterministic independence",
+    subtitle: "The Agency's final act.",
     title: "Flight Mode",
-    body: "When a token hits 15K holders, top-10 concentration drops below 18%, and treasury remaining falls under 5% — the Agency automatically hands full LP control to the community. If conditions aren't met, a forced sunset triggers at 180 days. No human decision required.",
+    body: "The Agency's entire purpose is to make itself unnecessary. When a token hits 15K holders, top-10 concentration drops below 18%, and treasury falls under 5% — the Agency transfers full LP control to the community and dissolves. If conditions aren't met within 180 days, a forced sunset triggers. The Agency never overstays. Every token either graduates to independence or gets a clean exit.",
   },
   {
     id: "transparency",
@@ -193,6 +199,75 @@ function VsSVG() {
       <style>{`
         @keyframes chartDraw{from{opacity:0;stroke-dashoffset:400;stroke-dasharray:400}to{opacity:1;stroke-dashoffset:0;stroke-dasharray:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      `}</style>
+    </svg>
+  );
+}
+
+function AgencySVG() {
+  const nodes = [
+    { cx: 160, cy: 60, label: "LP Mgmt", color: "#A9FF00", delay: 0.2 },
+    { cx: 270, cy: 120, label: "Compound", color: "#00FFB2", delay: 0.4 },
+    { cx: 230, cy: 210, label: "Dist", color: "#3B82F6", delay: 0.6 },
+    { cx: 90, cy: 210, label: "Flight", color: "#F59E0B", delay: 0.8 },
+    { cx: 50, cy: 120, label: "Charter", color: "#A78BFA", delay: 1.0 },
+  ];
+
+  return (
+    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <pattern id="agcygrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(169,255,0,0.05)" strokeWidth="0.5"/>
+        </pattern>
+        <radialGradient id="agcyGlow">
+          <stop offset="0%" stopColor="#A9FF00" stopOpacity="0.15"/>
+          <stop offset="100%" stopColor="#A9FF00" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="240" fill="url(#agcygrid)"/>
+
+      {/* Central Agency node */}
+      <g style={{animation:"agcyPulse 3s ease-in-out infinite"}}>
+        <circle cx="160" cy="135" r="38" fill="url(#agcyGlow)" stroke="#A9FF00" strokeWidth="2"/>
+        <circle cx="160" cy="135" r="28" fill="rgba(169,255,0,0.08)" stroke="#A9FF00" strokeWidth="1.5"/>
+        <text x="160" y="130" textAnchor="middle" fontSize="9" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">AGENCY</text>
+        <text x="160" y="143" textAnchor="middle" fontSize="7" fill="rgba(169,255,0,0.6)" fontFamily="monospace">per-token</text>
+      </g>
+
+      {/* Outer ring — dashed orbit */}
+      <circle cx="160" cy="135" r="80" fill="none" stroke="rgba(169,255,0,0.08)" strokeWidth="1" strokeDasharray="4 6"
+        style={{animation:"agcySpin 30s linear infinite"}}/>
+
+      {/* Connection lines + function nodes */}
+      {nodes.map(({ cx, cy, label, color, delay }) => (
+        <g key={label} style={{animation:`fadeIn 0.5s ease-out ${delay}s both`}}>
+          {/* Connection line */}
+          <line x1="160" y1="135" x2={cx} y2={cy} stroke={color} strokeWidth="1.5" strokeDasharray="4 4" opacity="0.4">
+            <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+          </line>
+          {/* Node circle */}
+          <circle cx={cx} cy={cy} r="22" fill={`${color}10`} stroke={color} strokeWidth="1.5"/>
+          <text x={cx} y={cy + 3} textAnchor="middle" fontSize="8" fill={color} fontFamily="monospace" fontWeight="bold">{label}</text>
+          {/* Pulse dot */}
+          <circle cx={cx} cy={cy - 22} r="3" fill={color}>
+            <animate attributeName="opacity" values="0.3;1;0.3" dur={`${1.5 + delay * 0.5}s`} repeatCount="indefinite"/>
+          </circle>
+        </g>
+      ))}
+
+      {/* "1 token = 1 agency" label */}
+      <g style={{animation:"fadeIn 0.6s ease-out 1.4s both"}}>
+        <rect x="105" y="4" width="110" height="18" rx="4" fill="rgba(169,255,0,0.08)" stroke="rgba(169,255,0,0.25)" strokeWidth="1"/>
+        <text x="160" y="16" textAnchor="middle" fontSize="8" fill="#A9FF00" fontFamily="monospace" fontWeight="bold">1 TOKEN = 1 AGENCY</text>
+      </g>
+
+      {/* Bottom label */}
+      <text x="160" y="236" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.2)" fontFamily="monospace">autonomous · deterministic · per-token</text>
+
+      <style>{`
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes agcyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+        @keyframes agcySpin{from{transform:rotate(0deg);transform-origin:160px 135px}to{transform:rotate(360deg);transform-origin:160px 135px}}
       `}</style>
     </svg>
   );
@@ -669,6 +744,7 @@ function TransparencySVG() {
 
 function SlideSVG({ id }: { id: string }) {
   if (id === "vs") return <VsSVG />;
+  if (id === "agency") return <AgencySVG />;
   if (id === "infra") return <InfraSVG />;
   if (id === "cli") return <CliSVG />;
   if (id === "ai") return <AiSVG />;

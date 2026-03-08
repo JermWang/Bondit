@@ -28,11 +28,11 @@ function getBadge(type: string | null) {
 
 /* ─── Value Prop Strip (for modal-skippers) ────────────────────── */
 const VALUE_PROPS = [
-  { icon: "🛡", label: "On-Chain Charter", desc: "Immutable rules locked at genesis" },
-  { icon: "💧", label: "3× Deeper LP", desc: "15% reserve vs PumpFun's 5%" },
-  { icon: "🔄", label: "70% Fee → LP", desc: "Fees compound back into liquidity" },
-  { icon: "🔗", label: "Referral Rewards", desc: "Earn 10% of trading fees" },
-  { icon: "✈", label: "Auto Flight Mode", desc: "Community control at 15K holders" },
+  { icon: "🤖", label: "1 Token = 1 Agency", desc: "Every token gets its own autonomous on-chain agent" },
+  { icon: "💧", label: "3× Deeper LP", desc: "Agency manages 15% LP reserve on Meteora" },
+  { icon: "🔄", label: "70% Fee → LP", desc: "Agency compounds fees back into liquidity 24/7" },
+  { icon: "�", label: "Immutable Charter", desc: "Agency rules locked at genesis, no admin keys" },
+  { icon: "✈", label: "Auto Flight Mode", desc: "Agency dissolves at 15K holders — community takes over" },
 ];
 
 function ValuePropStrip() {
@@ -310,7 +310,7 @@ function HomeContent() {
       {/* ═══ FOOTER ═══ */}
       <footer className="py-8 mt-4 text-center">
         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-8" />
-        <p className="text-[12px] text-[#4C5D84]">BondIt.lol — Agency-Based Token Launches on Solana</p>
+        <p className="text-[12px] text-[#4C5D84]">BondIt.lol — Every Token Gets Its Own Agency</p>
       </footer>
     </div>
   );
