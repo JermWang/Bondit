@@ -6,7 +6,7 @@ services:
   - type: web
     name: bondit-indexer
     runtime: node
-    buildCommand: cd services/indexer && npm install && npm run build
+    buildCommand: npm install && npm run build --workspace @bondit/sdk && npm run build --workspace @bondit/indexer
     startCommand: cd services/indexer && npm start
     envVars:
       - key: DATABASE_URL
