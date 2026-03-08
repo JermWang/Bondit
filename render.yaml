@@ -40,21 +40,6 @@ services:
       - key: LAUNCH_FACTORY_PROGRAM_ID
         value: "LFac1111111111111111111111111111111111111111"
 
-  # ── Keeper ──────────────────────────────────────────────────────────────
-  - type: worker
-    name: bondit-keeper
-    runtime: node
-    buildCommand: cd services/keeper && npm install && npm run build
-    startCommand: cd services/keeper && npm start
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: bondit-db
-          property: connectionString
-      - key: SOLANA_RPC_URL
-        sync: false
-      - key: KEEPER_KEYPAIR_PATH
-        sync: false
 
 databases:
   - name: bondit-db
