@@ -1,6 +1,6 @@
 import { AIProvider, ChatMessage, CompletionOptions, CompletionResult } from "./types";
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "gpt-4o";
 const DEFAULT_MAX_TOKENS = 1024;
 
 /**

@@ -3,7 +3,8 @@ import * as dotenv from "dotenv";
 import { ReportGenerator } from "./reports";
 import { AnomalyDetector } from "./anomaly";
 import { QueryHandler } from "./queries";
-import { resolveProvider } from "./providers";
+import { resolveTeamProvider, parseByokHeaders } from "./providers";
+import { CreditTracker } from "./credits";
 import { logger } from "./logger";
 
 dotenv.config();
@@ -75,7 +76,7 @@ function applyCors(req: Request, res: Response, allowedOrigins: Set<string>): bo
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-AI-Provider, X-AI-API-Key");
   }
 
   if (req.method === "OPTIONS") {
@@ -117,10 +118,17 @@ async function main() {
   });
   app.use(createRateLimiter(rateLimitWindowMs, rateLimitMaxRequests));
 
-  const aiProvider = resolveProvider();
+  const teamProvider = resolveTeamProvider();
+  if (teamProvider) {
+    logger.info(`Team AI provider: ${teamProvider.name}`);
+  } else {
+    logger.warn("No team AI provider configured — all requests will use grounded fallback unless BYOK headers are supplied");
+  }
+
+  const credits = new CreditTracker();
   const reports = new ReportGenerator();
   const anomaly = new AnomalyDetector();
-  const queries = new QueryHandler(aiProvider);
+  const queries = new QueryHandler(teamProvider, credits);
 
   type LaunchParams = { launchId: string };
   type QueryBody = { launchId?: string; question?: string };
@@ -165,7 +173,7 @@ async function main() {
     }
   });
 
-  // Community query endpoint
+  // Community query endpoint (supports BYOK via X-AI-Provider + X-AI-API-Key headers)
   app.post("/api/query", async (req: Request<Record<string, never>, unknown, QueryBody>, res: Response) => {
     try {
       const launchId = typeof req.body.launchId === "string" ? req.body.launchId.trim() : "";
@@ -179,7 +187,8 @@ async function main() {
         return;
       }
 
-      const answer = await queries.handleQuery(launchId, question);
+      const byok = parseByokHeaders(req.headers);
+      const answer = await queries.handleQuery(launchId, question, byok);
       res.json(answer);
     } catch (err) {
       logger.error({ err }, "Query handling failed");
@@ -187,7 +196,7 @@ async function main() {
     }
   });
 
-  // OpenClaw proxy endpoint
+  // OpenClaw proxy endpoint (supports BYOK via X-AI-Provider + X-AI-API-Key headers)
   // Matches OpenAI's /v1/chat/completions schema so OpenClaw can use BondIt as a Custom Provider
   app.post("/v1/chat/completions", async (req: Request, res: Response) => {
     try {
@@ -212,10 +221,18 @@ async function main() {
         return;
       }
 
-      // 3. Delegate to QueryHandler to build context and prompt the actual LLM
-      const answer = await queries.handleQuery(launchId, question);
+      // 3. Check for BYOK headers
+      const byok = parseByokHeaders(req.headers);
 
-      // 4. Return in standard OpenAI format
+      // 4. Delegate to QueryHandler to build context and prompt the actual LLM
+      const answer = await queries.handleQuery(launchId, question, byok);
+
+      // 5. Build response — include credit alert as a system note if present
+      const content = answer.creditAlert
+        ? `${answer.answer}\n\n⚠️ ${answer.creditAlert}\n\n_${answer.disclaimer}_`
+        : `${answer.answer}\n\n_${answer.disclaimer}_`;
+
+      // 6. Return in standard OpenAI format
       res.json({
         id: `chatcmpl-${answer.promptHash}`,
         object: "chat.completion",
@@ -226,16 +243,21 @@ async function main() {
             index: 0,
             message: {
               role: "assistant",
-              content: `${answer.answer}\n\n_${answer.disclaimer}_`
+              content,
             },
             finish_reason: "stop"
           }
         ],
         usage: {
-          prompt_tokens: 0, // Mocked for proxy transparency
+          prompt_tokens: 0,
           completion_tokens: 0,
           total_tokens: 0
-        }
+        },
+        // BondIt extension: tier and credit info
+        bondit: {
+          tier: answer.tier,
+          creditAlert: answer.creditAlert ?? null,
+        },
       });
     } catch (err) {
       logger.error({ err }, "OpenClaw proxy chat completion failed");
@@ -243,9 +265,40 @@ async function main() {
     }
   });
 
+  // ── Credit status & alerts ──────────────────────────────────────────────
+
+  // GET /api/credits/status — check team AI credit status
+  app.get("/api/credits/status", (_req: Request, res: Response) => {
+    res.json(credits.getStatus());
+  });
+
+  // GET /api/credits/alerts — get recent credit alerts (optionally filter by launchId)
+  app.get("/api/credits/alerts", (req: Request, res: Response) => {
+    const launchId = typeof req.query.launchId === "string" ? req.query.launchId.trim() : undefined;
+    res.json({ alerts: credits.getAlerts(launchId) });
+  });
+
+  // GET /api/credits/spend — get recent spend log
+  app.get("/api/credits/spend", (_req: Request, res: Response) => {
+    const limit = Math.min(100, Math.max(1, Number((_req.query as any).limit) || 50));
+    res.json({ spend: credits.getSpendLog(limit) });
+  });
+
   // Health
   app.get("/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok", role: "advisory_only", timestamp: Date.now() });
+    const creditStatus = credits.getStatus();
+    res.json({
+      status: "ok",
+      role: "advisory_only",
+      teamProvider: teamProvider?.name ?? "none",
+      credits: {
+        exhausted: creditStatus.exhausted,
+        remainingPct: creditStatus.totalBudgetTokens > 0
+          ? ((creditStatus.remainingTokens / creditStatus.totalBudgetTokens) * 100).toFixed(1)
+          : "0",
+      },
+      timestamp: Date.now(),
+    });
   });
 
   app.listen(port, () => {

@@ -8,13 +8,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "../..",
-    "baseUrl": ".",
-    "paths": {
-      "@bondit/sdk": ["../../sdk/src/index.ts"],
-      "@bondit/sdk/*": ["../../sdk/src/*"]
-    }
+    "rootDir": "./src",
+    "baseUrl": "."
   },
-  "include": ["src/**/*", "../../sdk/src/api.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

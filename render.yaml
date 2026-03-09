@@ -40,6 +40,26 @@ services:
       - key: LAUNCH_FACTORY_PROGRAM_ID
         sync: false
 
+  # ── OpenClaw AI Advisory Service ──────────────────────────────────────
+  - type: web
+    name: bondit-openclaw-ai
+    runtime: node
+    buildCommand: npm install && npm run build --workspace @bondit/sdk && npm run build --workspace @bondit/ai
+    startCommand: cd services/openclaw-ai && npm start
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: INDEXER_API_URL
+        value: "https://bondit-indexer.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://www.bondit.lol,https://bondit.lol"
+      - key: AI_DAILY_TOKEN_BUDGET
+        value: "500000"
+      - key: PORT
+        value: "3002"
+
 
 databases:
   - name: bondit-db
