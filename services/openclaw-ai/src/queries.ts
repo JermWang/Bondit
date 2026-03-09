@@ -1,6 +1,7 @@
 import { logger } from "./logger";
 import { AIProvider, ChatMessage, resolveProvider, parseByokHeaders, ByokOverride } from "./providers";
 import { CreditTracker } from "./credits";
+import { birdeye, pyth, xresearch } from "./skills";
 import crypto from "crypto";
 import type {
   LaunchCharterResponse,
@@ -25,6 +26,12 @@ Rules:
 
 const INDEXER_API_BASE = process.env.INDEXER_API_URL ?? process.env.NEXT_PUBLIC_INDEXER_API_URL ?? "http://localhost:3001/api";
 
+type MarketIntel = {
+  birdeyeOverview: birdeye.TokenOverview | null;
+  solPrice: pyth.PythPrice | null;
+  sentiment: xresearch.SentimentSummary | null;
+};
+
 type QueryContext = {
   dashboard: LaunchDashboardResponse;
   charter: LaunchCharterResponse | null;
@@ -32,6 +39,7 @@ type QueryContext = {
   liquidity: LaunchLiquidityStatsResponse | null;
   flight: LaunchFlightStatusResponse | null;
   fees: LaunchFeeBreakdownResponse | null;
+  market: MarketIntel;
 };
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -161,6 +169,16 @@ export class QueryHandler {
       fetchJson<LaunchFeeBreakdownResponse>(`${INDEXER_API_BASE}/launches/${encodeURIComponent(launchId)}/fees`),
     ]);
 
+    // Enrich with external market intelligence (non-blocking, best-effort)
+    const mintAddress = (dashboard as any).mintAddress as string | undefined;
+    const symbol = (dashboard as any).symbol as string | undefined;
+
+    const [birdeyeResult, solPriceResult, sentimentResult] = await Promise.allSettled([
+      mintAddress && birdeye.isConfigured() ? birdeye.getTokenOverview(mintAddress) : Promise.resolve(null),
+      pyth.getSolPrice(),
+      symbol && xresearch.isConfigured() ? xresearch.searchTokenSentiment(symbol, 10) : Promise.resolve(null),
+    ]);
+
     return {
       dashboard,
       charter: charter.status === "fulfilled" ? charter.value : null,
@@ -168,22 +186,65 @@ export class QueryHandler {
       liquidity: liquidity.status === "fulfilled" ? liquidity.value : null,
       flight: flight.status === "fulfilled" ? flight.value : null,
       fees: fees.status === "fulfilled" ? fees.value : null,
+      market: {
+        birdeyeOverview: birdeyeResult.status === "fulfilled" ? birdeyeResult.value : null,
+        solPrice: solPriceResult.status === "fulfilled" ? solPriceResult.value : null,
+        sentiment: sentimentResult.status === "fulfilled" ? sentimentResult.value : null,
+      },
     };
   }
 
   private buildMessages(launchId: string, question: string, queryType: string, context: QueryContext): ChatMessage[] {
+    // Build enriched context with market intel
+    const enrichedContext: Record<string, unknown> = {
+      dashboard: context.dashboard,
+      charter: context.charter,
+      treasury: context.treasury,
+      liquidity: context.liquidity,
+      flight: context.flight,
+      fees: context.fees,
+    };
+
+    // Append market intelligence when available
+    if (context.market.birdeyeOverview) {
+      const b = context.market.birdeyeOverview;
+      enrichedContext.marketData = {
+        source: "birdeye",
+        price: b.price,
+        priceChange24h: `${b.priceChange24hPercent?.toFixed(2)}%`,
+        volume24h: `$${b.volume24hUSD?.toLocaleString()}`,
+        marketCap: `$${b.marketCap?.toLocaleString()}`,
+        liquidity: `$${b.liquidity?.toLocaleString()}`,
+        holders: b.holder,
+      };
+    }
+
+    if (context.market.solPrice) {
+      enrichedContext.solPrice = {
+        source: "pyth",
+        usd: context.market.solPrice.price.toFixed(2),
+        confidence: context.market.solPrice.confidence.toFixed(4),
+      };
+    }
+
+    if (context.market.sentiment && context.market.sentiment.tweetCount > 0) {
+      enrichedContext.socialSentiment = {
+        source: "x_research",
+        tweetCount: context.market.sentiment.tweetCount,
+        topTweets: context.market.sentiment.tweets.slice(0, 3).map((t) => ({
+          text: t.text.slice(0, 200),
+          likes: t.metrics.likes,
+          retweets: t.metrics.retweets,
+          author: t.authorUsername ?? t.authorId,
+        })),
+      };
+    }
+
     return [
       { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Launch ID: ${launchId}\nCategory: ${queryType}\nQuestion: ${question}\n\nLive launch context:\n${JSON.stringify({
-          dashboard: context.dashboard,
-          charter: context.charter,
-          treasury: context.treasury,
-          liquidity: context.liquidity,
-          flight: context.flight,
-          fees: context.fees,
-        }, null, 2)}`,
+        content: `Launch ID: ${launchId}\nCategory: ${queryType}\nQuestion: ${question}\n\nLive launch context:\n${JSON.stringify(enrichedContext, null, 2)}`,
       },
     ];
   }

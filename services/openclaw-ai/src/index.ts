@@ -6,6 +6,7 @@ import { QueryHandler } from "./queries";
 import { resolveTeamProvider, parseByokHeaders } from "./providers";
 import { CreditTracker } from "./credits";
 import { logger } from "./logger";
+import { getSkillStatuses, logSkillStatuses } from "./skills";
 
 dotenv.config();
 
@@ -124,6 +125,9 @@ async function main() {
   } else {
     logger.warn("No team AI provider configured — all requests will use grounded fallback unless BYOK headers are supplied");
   }
+
+  // Log active skills on startup
+  logSkillStatuses();
 
   const credits = new CreditTracker();
   const reports = new ReportGenerator();
@@ -282,6 +286,29 @@ async function main() {
   app.get("/api/credits/spend", (_req: Request, res: Response) => {
     const limit = Math.min(100, Math.max(1, Number((_req.query as any).limit) || 50));
     res.json({ spend: credits.getSpendLog(limit) });
+  });
+
+  // ── Skills & Intelligence ────────────────────────────────────────────────
+
+  // GET /api/skills — list all available intelligence skills and their status
+  app.get("/api/skills", (_req: Request, res: Response) => {
+    res.json({ skills: getSkillStatuses() });
+  });
+
+  // POST /api/risk/wallet — score a wallet address for risk
+  app.post("/api/risk/wallet", async (req: Request, res: Response) => {
+    try {
+      const address = typeof req.body.address === "string" ? req.body.address.trim() : "";
+      if (!address || address.length < 32 || address.length > 44) {
+        res.status(400).json({ error: "Invalid Solana address" });
+        return;
+      }
+      const report = await anomaly.scoreWallet(address);
+      res.json(report);
+    } catch (err) {
+      logger.error({ err }, "Wallet risk scoring failed");
+      res.status(500).json({ error: "Risk scoring failed" });
+    }
   });
 
   // Health
