@@ -1,15 +1,22 @@
 import { Connection, PublicKey } from "@solana/web3.js";
+import {
+  LAUNCH_FACTORY_PROGRAM_ID,
+  BONDING_CURVE_PROGRAM_ID,
+  AGENCY_VAULTS_PROGRAM_ID,
+  POLICY_ENGINE_PROGRAM_ID,
+  VENUE_ADAPTERS_PROGRAM_ID,
+} from "@bondit/sdk";
 import { logger } from "./logger";
 import { decodeIndexedEventPayload } from "./event-decoders";
 import { createIndexerEventStore, resolveStorageTarget } from "./event-store";
 import { resolveIndexedEvent, type IndexedProgramName } from "./events";
 
 const PROGRAM_IDS = {
-  launchFactory: new PublicKey("LFac1111111111111111111111111111111111111111"),
-  bondingCurve: new PublicKey("BCrv1111111111111111111111111111111111111111"),
-  agencyVaults: new PublicKey("AVlt1111111111111111111111111111111111111111"),
-  policyEngine: new PublicKey("PEng1111111111111111111111111111111111111111"),
-  venueAdapters: new PublicKey("VAdp1111111111111111111111111111111111111111"),
+  launchFactory: LAUNCH_FACTORY_PROGRAM_ID,
+  bondingCurve: BONDING_CURVE_PROGRAM_ID,
+  agencyVaults: AGENCY_VAULTS_PROGRAM_ID,
+  policyEngine: POLICY_ENGINE_PROGRAM_ID,
+  venueAdapters: VENUE_ADAPTERS_PROGRAM_ID,
 } satisfies Record<IndexedProgramName, PublicKey>;
 
 /**

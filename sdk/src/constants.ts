@@ -2,11 +2,19 @@ import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
 // ── Program IDs ───────────────────────────────────────────────────────────
-export const LAUNCH_FACTORY_PROGRAM_ID = new PublicKey("LFac1111111111111111111111111111111111111111");
-export const BONDING_CURVE_PROGRAM_ID = new PublicKey("BCrv1111111111111111111111111111111111111111");
-export const AGENCY_VAULTS_PROGRAM_ID = new PublicKey("AVlt1111111111111111111111111111111111111111");
-export const POLICY_ENGINE_PROGRAM_ID = new PublicKey("PEng1111111111111111111111111111111111111111");
-export const VENUE_ADAPTERS_PROGRAM_ID = new PublicKey("VAdp1111111111111111111111111111111111111111");
+// Reads from environment variables when available. Falls back to the System
+// Program (11111…) so that importing the SDK never crashes at load time,
+// even before real programs are deployed on-chain.
+const PLACEHOLDER = "11111111111111111111111111111111";
+function programId(envKey: string): PublicKey {
+  return new PublicKey(process.env[envKey] || PLACEHOLDER);
+}
+
+export const LAUNCH_FACTORY_PROGRAM_ID = programId("LAUNCH_FACTORY_PROGRAM_ID");
+export const BONDING_CURVE_PROGRAM_ID = programId("BONDING_CURVE_PROGRAM_ID");
+export const AGENCY_VAULTS_PROGRAM_ID = programId("AGENCY_VAULTS_PROGRAM_ID");
+export const POLICY_ENGINE_PROGRAM_ID = programId("POLICY_ENGINE_PROGRAM_ID");
+export const VENUE_ADAPTERS_PROGRAM_ID = programId("VENUE_ADAPTERS_PROGRAM_ID");
 
 // ── Supply Constants ──────────────────────────────────────────────────────
 export const TOKEN_DECIMALS = 6;
