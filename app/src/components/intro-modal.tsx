@@ -14,18 +14,6 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    id: "vs",
-    subtitle: "BondIt vs pump.fun",
-    title: "Your Token Gets Its Own Agency",
-    body: "pump.fun launches your token and walks away. BondIt assigns every single token its own dedicated Agency — an autonomous on-chain agent that manages LP, compounds fees, controls treasury releases, and guides the token to community independence. Not a shared service. Not a team. A per-token program that runs 24/7 with zero human discretion.",
-  },
-  {
-    id: "agency",
-    subtitle: "One token. One Agency. One mission.",
-    title: "The Per-Token Agency Model",
-    body: "This is what makes BondIt fundamentally different. Every launch creates a dedicated Agency instance bound to that token alone. The Agency manages a Meteora LP position, compounds 70% of trading fees back into liquidity, releases treasury at a fixed 0.20%/day decay rate, and monitors flight-readiness conditions — all autonomously, all on-chain, all verifiable. When the community is ready, the Agency dissolves and hands over full control. No other launchpad does this.",
-  },
-  {
     id: "infra",
     subtitle: "Same speed. Way more infrastructure.",
     title: "PumpFun + Guardrails",
@@ -40,16 +28,22 @@ const SLIDES: Slide[] = [
     ],
   },
   {
+    id: "vs",
+    subtitle: "BondIt vs pump.fun",
+    title: "Your Token Gets Its Own Agency",
+    body: "pump.fun launches your token and walks away. BondIt assigns every single token its own dedicated Agency — an autonomous on-chain agent that manages LP, compounds fees, controls treasury releases, and guides the token to community independence. Not a shared service. Not a team. A per-token program that runs 24/7 with zero human discretion.",
+  },
+  {
+    id: "agency",
+    subtitle: "One token. One Agency. One mission.",
+    title: "The Per-Token Agency Model",
+    body: "This is what makes BondIt fundamentally different. Every launch creates a dedicated Agency instance bound to that token alone. The Agency manages a Meteora LP position, compounds 70% of trading fees back into liquidity, releases treasury at a fixed 0.20%/day decay rate, and monitors flight-readiness conditions — all autonomously, all on-chain, all verifiable. When the community is ready, the Agency dissolves and hands over full control. No other launchpad does this.",
+  },
+  {
     id: "cli",
     subtitle: "Built for Agents",
     title: "Headless CLI Orchestration",
     body: "Spin up a launch in seconds. BondIt provides a headless CLI with Phantom wallet integration built-in. Define your parameters in a local config file, validate the rules, and simulate your launch before sending a single transaction.",
-  },
-  {
-    id: "ai",
-    subtitle: "Intelligence built-in",
-    title: "OpenClaw AI Integration",
-    body: "Every BondIt launch gets its own dedicated AI agent powered by your choice of Anthropic or OpenAI. Use OpenClaw as your Telegram/Discord gateway, point it to our API, and BondIt will automatically inject live on-chain stats into every response.",
   },
   {
     id: "charter",
@@ -422,72 +416,6 @@ function CliSVG() {
   );
 }
 
-function AiSVG() {
-  return (
-    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <defs>
-        <pattern id="agrid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(139,92,246,0.07)" strokeWidth="0.5"/>
-        </pattern>
-        <linearGradient id="aiGlow" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#A78BFA" stopOpacity="0.2"/>
-          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0"/>
-        </linearGradient>
-      </defs>
-      <rect width="320" height="240" fill="url(#agrid)"/>
-
-      {/* Central AI Node */}
-      <g style={{animation:"floatNode 3s ease-in-out infinite"}}>
-        <circle cx="160" cy="110" r="30" fill="url(#aiGlow)" stroke="#8B5CF6" strokeWidth="2"/>
-        <circle cx="160" cy="110" r="22" fill="none" stroke="#A78BFA" strokeWidth="1" strokeDasharray="4 4" style={{animation:"spinSlow 10s linear infinite"}}/>
-        {/* Abstract face/claw symbol */}
-        <path d="M152 105 L168 105 M160 112 L160 120" stroke="#F1F1F4" strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="152" cy="105" r="1.5" fill="#F1F1F4"/>
-        <circle cx="168" cy="105" r="1.5" fill="#F1F1F4"/>
-      </g>
-      
-      {/* Label */}
-      <text x="160" y="155" textAnchor="middle" fontSize="10" fill="#A78BFA" fontFamily="monospace" fontWeight="bold">OPENCLAW AI</text>
-
-      {/* Data streams (animated lines) */}
-      <g stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 6" opacity="0.6">
-        <path d="M80 60 Q120 60 140 90" style={{animation:"streamFlow 2s linear infinite"}}/>
-        <path d="M240 60 Q200 60 180 90" style={{animation:"streamFlow 2s linear infinite reverse"}}/>
-        <path d="M100 170 Q130 170 145 135" style={{animation:"streamFlow 1.5s linear infinite"}}/>
-        <path d="M220 170 Q190 170 175 135" style={{animation:"streamFlow 1.5s linear infinite reverse"}}/>
-      </g>
-
-      {/* Peripheral nodes */}
-      {[
-        {cx:75, cy:55, label:"Telegram"},
-        {cx:245, cy:55, label:"Discord"},
-        {cx:95, cy:175, label:"Charter Data"},
-        {cx:225, cy:175, label:"Live Dist"},
-      ].map(({cx,cy,label}, i) => (
-        <g key={label} style={{animation:`fadeIn 0.5s ease-out ${i*0.2}s both`}}>
-          <circle cx={cx} cy={cy} r="18" fill="rgba(139,92,246,0.1)" stroke="#8B5CF6" strokeWidth="1.5"/>
-          <text x={cx} y={cy+3} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.7)" fontFamily="monospace">{label}</text>
-          <circle cx={cx} cy={cy-18} r="3" fill="#A78BFA">
-            <animate attributeName="opacity" values="0.2;1;0.2" dur={`${1.5+i*0.5}s`} repeatCount="indefinite"/>
-          </circle>
-        </g>
-      ))}
-
-      {/* Pulse rings from center */}
-      <circle cx="160" cy="110" r="30" fill="none" stroke="#A78BFA" strokeWidth="1">
-        <animate attributeName="r" values="30; 80" dur="2s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.5; 0" dur="2s" repeatCount="indefinite"/>
-      </circle>
-
-      <style>{`
-        @keyframes floatNode{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        @keyframes spinSlow{from{transform:rotate(0deg);transform-origin:160px 110px}to{transform:rotate(360deg);transform-origin:160px 110px}}
-        @keyframes streamFlow{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
-        @keyframes fadeIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
-      `}</style>
-    </svg>
-  );
-}
 function CharterSVG() {
   return (
     <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -747,7 +675,6 @@ function SlideSVG({ id }: { id: string }) {
   if (id === "agency") return <AgencySVG />;
   if (id === "infra") return <InfraSVG />;
   if (id === "cli") return <CliSVG />;
-  if (id === "ai") return <AiSVG />;
   if (id === "charter") return <CharterSVG />;
   if (id === "distribution") return <DistributionSVG />;
   if (id === "flight") return <FlightSVG />;
