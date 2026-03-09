@@ -38,7 +38,7 @@ services:
       - key: VANITY_CHECK_INTERVAL_MS
         value: "10000"
       - key: LAUNCH_FACTORY_PROGRAM_ID
-        value: ""
+        value: "J7G3zQBVrtdNPaxHqVF1uoPkhkdiGtT8dVGACcfEcvTh"
 
   # ── OpenClaw AI Advisory Service ──────────────────────────────────────
   - type: web
