@@ -103,12 +103,13 @@ function spawnWorker(id: number): Worker {
       const ok = await insertKey(msg.key, msg.launchIdHex, msg.address);
       if (ok) {
         totalFound++;
-        console.log(
-          `[vanity-worker] ✔ Found #${totalFound}/${BACKLOG_TARGET}: ${msg.address}`,
-        );
-        console.log(
-          `  Key: ${msg.key} | Attempts since last: ${msg.attempts.toLocaleString()} | Total: ${totalAttempts.toLocaleString()}`,
-        );
+        console.log(`\n[vanity-worker] ════════════════════════════════════════════`);
+        console.log(`[vanity-worker] ✔ VANITY #${totalFound}/${BACKLOG_TARGET} FOUND!`);
+        console.log(`[vanity-worker]   Contract Address: ${msg.address}`);
+        console.log(`[vanity-worker]   Suffix Match:     ...${msg.address.slice(-SUFFIX.length)}`);
+        console.log(`[vanity-worker]   Idem Key:         ${msg.key}`);
+        console.log(`[vanity-worker]   Attempts:         ${msg.attempts.toLocaleString()} (${totalAttempts.toLocaleString()} total)`);
+        console.log(`[vanity-worker] ════════════════════════════════════════════\n`);
       }
     }
   });
