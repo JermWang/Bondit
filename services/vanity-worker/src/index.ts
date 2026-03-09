@@ -83,7 +83,7 @@ function spawnWorker(id: number): Worker {
   const worker = new Worker(workerPath, {
     workerData: {
       suffix: SUFFIX,
-      programIdBase58: PROGRAM_ID,
+      programIdBytes: Array.from(new PublicKey(PROGRAM_ID).toBytes()),
       seedString: SEED_STRING,
       workerId: id,
     },
@@ -104,7 +104,10 @@ function spawnWorker(id: number): Worker {
       if (ok) {
         totalFound++;
         console.log(
-          `[vanity-worker] ✔ Found #${totalFound}: ${msg.address} (${totalAttempts.toLocaleString()} total attempts)`,
+          `[vanity-worker] ✔ Found #${totalFound}/${BACKLOG_TARGET}: ${msg.address}`,
+        );
+        console.log(
+          `  Key: ${msg.key} | Attempts since last: ${msg.attempts.toLocaleString()} | Total: ${totalAttempts.toLocaleString()}`,
         );
       }
     }
